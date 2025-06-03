@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        background-color:#D2B48C; /* prevents flash by replacing background with the same colour */ 
+        background-image: url("background.png");
+        background-size: 100% auto;  /* Full width, height adjusts automatically */
+        background-position: top center;
+        background-attachment: scroll;  /* This makes it scroll with content */
+        min-height: 281vh;  /* Ensures the page is at least full height */
+    }
+
+    .fp-container {
+        
+    }
+
+    #shuify-title {
+        font-family: sans-serif;
+        font-weight: 545;
+        font-size: 400%;
+        width: 21%;
+        z-index: 1;
+    }
+
+    #fp-castle {
+        width: 25%;
+        z-index: 0;
+    }
+</style>
+</head>
+<body>
+
+    <div class="fp-container" style="position:relative;">
+        <h1 id="shuify-title" style="position:absolute; top:0; left:0;">Make Flow in Spaces</h1>
+        <img id="fp-castle" src="castle-2-bg.png" alt="castle" style="position:absolute; top: 20px; left:50px;">
+    </div>
+
+</body>
+</html>
