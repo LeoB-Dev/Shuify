@@ -13,15 +13,37 @@
         background-size: 100% auto;  /* Full width, height adjusts automatically */
         background-position: top center;
         background-attachment: scroll;  /* This makes it scroll with content */
-        min-height: 281vh;  /* Ensures the page is at least full height */
-    }
-
-    .fp-container {
-        
-    }
-
-    #shuify-title {
+        min-height: 265vh;  /* Ensures the page is at least full height */
         font-family: sans-serif;
+        margin:2% 10%;
+        display: flex;
+        justify-items: center;
+    }
+
+    #shuify-name {
+        justify-content: space-evenly;
+        font-weight: 200;
+        width: 21%;
+        z-index: 1;
+    }
+
+    .top-bar, .right-of-top-bar {
+        display: flex;
+        justify-content: space-between;
+        z-index: 1;
+    }
+
+    .top-bar {
+        width: 100%;
+    }
+
+    .right-of-top-bar {
+        width: 50%;
+        font-size: smaller;
+    }
+    
+
+    #descriptive-header {
         font-weight: 545;
         font-size: 400%;
         width: 21%;
@@ -32,12 +54,25 @@
         width: 25%;
         z-index: 0;
     }
+
 </style>
 </head>
 <body>
 
+    
+
+    <div class="top-bar">
+        <h1 id="shuify-name">Shuify</h1>
+        <div class="right-of-top-bar">
+            <h1>My Rooms</h1>
+            <h1>Presets</h1>
+            <h1>Items</h1>
+            <h1>Sign In</h1>
+        </div>
+    </div>
+
     <div class="fp-container" style="position:relative;">
-        <h1 id="shuify-title" style="position:absolute; top:0; left:0;">Make Flow in Spaces</h1>
+        <h1 id="descriptive-header" style="position:absolute; top:0; left:0;">Make Flow in Spaces</h1>
         <img id="fp-castle" src="castle-2-bg.png" alt="castle" style="position:absolute; top: 20px; left:50px;">
     </div>
 
