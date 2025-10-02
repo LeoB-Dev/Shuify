@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Squares</title>
+  <style>
+    /* Base body styling with Roboto font and flex layout */
+    body {
+      font-family: roboto;
+      font-size: medium;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh; /* Full viewport height */
+      overflow: hidden; /* Prevent scrolling on body */
+    }
+
+    /* Header and footer share similar styling but with different alignments */
+    .header, .footer {
+      display: flex;
+      background: #eeeeee;
+      align-items: center;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    /* Header styling with left-aligned text */
+    .header {
+      padding-left: 1.5%;
+      font-weight: 525;
+      height: 50px;
+    }
+
+    /* Footer styling with centered text */
+    .footer {
+      justify-content: center;
+      height: 33.5px;
+    }
+
+    /* Main content area with flex layout */
+    .main {
+      display: flex;
+      flex: 1; /* Takes remaining space */
+      overflow: hidden;
+    }
+
+    /* Sidebar styling - contains search and small squares */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: center; 
+      font-family: roboto;
+      background: lightslategrey;
+      flex: 0 0 25%; /* Fixed width of 25% */
+      min-width: 200px; /* Minimum width */
+      padding: 16px 0px;
+      overflow: hidden;
+    }
+
+    /* Container for the top navigation buttons */
+    .buttons-4-pages {
+      padding: 0 0 16px;
+      display: flex;
+      justify-content: space-between;
+      width: 90%;
+      gap: 10px;
+    }
+
+    /* Individual top navigation button styling */
+    .top-button {
+      flex: 1;
+      padding: 8px;
+      background-color: #eeeeee;
+      border: 1px solid #eeeeee;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis; /* Show ellipsis for text overflow */
+    }
+
+    /* Hover effect for top buttons */
+    .top-button:hover {
+      background-color: #e0e0e0;
+    }
+
+    /* Container for the scrollable squares in sidebar */
+    .squares-scrollable {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      width: 90%;
+      overflow-y: auto; /* Allow vertical scrolling */
+      padding: 0;
+      margin: 0;
+    }
+
+    /* Search input container */
+    .input {
+      width: 90%;
+      margin-bottom: 16px;
+    }
+
+    /* Search input styling */
+    input {
+      background-color: #eeeeee;
+      border: 1px solid #eeeeee;
+      border-radius: 8px;
+      padding: 8px 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Placeholder text styling for the search input */
+    input::placeholder {
+      color: #999999;
+      opacity: 1;
+    }
+
+    /* Styling for the small squares in the sidebar 
+       Different classes for different colors */
+    .small-square, .small-square-2, .small-square-3 {
+      flex: 0 0 calc(100% - 10px);
+      aspect-ratio: 1; /* Keep square shape */
+      border-radius: 10%;
+      max-width: 300px;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: rgba(0, 0, 0, 0.7);
+      transition: all 0.3s ease;
+    }
+
+    /* Green squares */
+    .small-square {
+      background: lightgreen;
+    }
+
+    /* Yellow squares */
+    .small-square-2 {
+      background: yellow;
+    }
+
+    /* Pink squares */
+    .small-square-3 {
+      background: rgb(193, 114, 127);
+    }
+
+    /* Class to hide squares when filtered */
+    .hidden-square {
+      display: none;
+    }
+
+    /* Main content area styling */
+    .content {
+      background: white;
+      flex: 1; /* Takes remaining space */
+      display: flex;
+      justify-content: center; 
+      align-items: center; 
+      overflow: hidden;
+    }
+
+    /* Main large square styling */
+    .square {
+      width: 75%;
+      aspect-ratio: 1; 
+      max-height: 525px; 
+      max-width: 525px; 
+      background: lightblue;
+      border-radius: 10%;
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr; /* 2x2 grid */
+      grid-template-rows: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    /* Styling for each quarter of the main square */
+    .quarter {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      border: 1px dashed rgba(0, 0, 0, 0.2);
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Style for quarter when it contains a square */
+    .quarter-occupied {
+      border: 1px dashed rgba(0, 0, 0, 0.1);
+    }
+
+    /* Responsive design for medium screens */
+    @media (min-width: 600px) {
+      .squares-scrollable {
+        max-width: 700px;
+        margin: 0 auto;
+      }
+      
+      /* Display small squares in 2 columns on medium screens */
+      .small-square, .small-square-2, .small-square-3 {
+        flex: 0 0 calc(50% - 10px);
+        max-width: 300px;
+        margin-bottom: 3px;
+      }
+    }
+
+    /* Responsive design for larger screens */
+    @media (min-width: 900px) {
+      .squares-scrollable {
+        max-width: 700px;
+      }
+    }
+
+    /* Hide scrollbar for the squares container */
+    .squares-scrollable::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Styling for squares after being dropped into a quarter */
+    .dropped-square {
+      width: 90%;
+      height: 90%;
+      border-radius: 10%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      font-size: 1.5rem;
+      color: rgba(0, 0, 0, 0.7);
+      position: absolute;
+      box-shadow: none;
+      cursor: grab; /* Hand cursor for draggable elements */
+    }
+
+    /* Help text for search functionality (currently commented out) */
+    .search-help {
+      width: 90%;
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: #eeeeee;
+      text-align: center;
+    }
+    
+    /* Styling for sidebar when used as drop zone */
+    .sidebar-drop-zone {
+      border: 2px dashed transparent;
+      transition: border-color 0.3s ease;
+    }
+    
+    /* Active state for sidebar drop zone when dragging over it */
+    .sidebar-drop-zone.active {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header section -->
+  <div class="header">My Squares</div>
+  
+  <!-- Main content container -->
+  <div class="main">
+    <!-- Sidebar section - also serves as a drop zone -->
+    <div class="sidebar sidebar-drop-zone" id="sidebar-drop-zone">
+      <!-- Navigation buttons -->
+      <div class="buttons-4-pages">
+        <button class="top-button" id="my-squares">My Squares</button>
+        <button class="top-button" id="selection-box">Presets</button>
+        <button class="top-button" id="selection-box">Items</button>
+      </div>
+      
+      <!-- Search input field -->
+      <div class="input">
+        <input type="text" id="search-input" placeholder="Search for items here...">
+      </div>
+      
+      <!-- Search help text (commented out) -->
+      <!-- <div class="search-help">
+        Search by number or color (green, yellow, pink)
+      </div> -->
+      
+      <!-- Container for the small squares in sidebar -->
+      <div class="squares-scrollable" id="squares-container">
+        <!-- Squares will be generated by JavaScript -->
+      </div>
+    </div>
+    
+    <!-- Main content area with the large square -->
+    <div class="content">
+      <div class="square" id="main-square">
+        <!-- The four quadrants of the main square -->
+        <div class="quarter" data-position="top-left"></div>
+        <div class="quarter" data-position="top-right"></div>
+        <div class="quarter" data-position="bottom-left"></div>
+        <div class="quarter" data-position="bottom-right"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer section -->
+  <div class="footer">Random Dev™</div>
+
+  <script>
+    // Define the initial squares configuration
+    // Each object represents one square with its type and color
+    const squaresConfig = [
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square-2', color: 'yellow' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square-2', color: 'yellow' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square-3', color: 'pink' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square-2', color: 'yellow' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square-2', color: 'yellow' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' },
+      { type: 'small-square', color: 'green' }
+    ];
+
+    // Get references to DOM elements
+    const squaresContainer = document.getElementById('squares-container');
+    const searchInput = document.getElementById('search-input');
+    const quarters = document.querySelectorAll('.quarter');
+    const sidebarDropZone = document.getElementById('sidebar-drop-zone');
+
+    // Generate numbered squares from the configuration
+    squaresConfig.forEach((config, index) => {
+      // Create a new div element for each square
+      const squareElement = document.createElement('div');
+      squareElement.className = config.type;
+      
+      // Add number (1-based index)
+      const squareNumber = index + 1;
+      squareElement.textContent = squareNumber;
+      
+      // Store the number and color as data attributes for later use
+      squareElement.dataset.number = squareNumber;
+      squareElement.dataset.color = config.color;
+      squareElement.dataset.type = config.type;
+      
+      // Make the square draggable
+      squareElement.draggable = true;
+      
+      // Add to container
+      squaresContainer.appendChild(squareElement);
+    });
+
+    // Variables to keep track of drag and drop operations
+    const smallSquares = document.querySelectorAll('.small-square, .small-square-2, .small-square-3');
+    let draggedSquare = null; // Tracks the currently dragged square
+    let draggedFromQuarter = null; // Tracks if dragged from a quarter
+
+    // Set up event listeners for sidebar squares
+    smallSquares.forEach(smallSquare => {
+      smallSquare.addEventListener('dragstart', dragStart);
+      smallSquare.addEventListener('dragend', dragEnd);
+    });
+
+    // Set up event listeners for each quarter in the main square
+    quarters.forEach(quarter => {
+      quarter.addEventListener('dragover', dragOver);
+      quarter.addEventListener('dragenter', dragEnter);
+      quarter.addEventListener('dragleave', dragLeave);
+      quarter.addEventListener('drop', dropOnQuarter);
+    });
+
+    // Set up sidebar as a drop zone for squares coming from the main square
+    sidebarDropZone.addEventListener('dragover', function(e) {
+      // Only allow dropping if it's a square from the main square
+      if (draggedFromQuarter) {
+        e.preventDefault();
+        this.classList.add('active'); // Visual feedback
+      }
+    });
+    
+    // Remove highlighting when leaving sidebar drop zone
+    sidebarDropZone.addEventListener('dragleave', function() {
+      this.classList.remove('active');
+    });
+    
+    // Handle dropping a square back into the sidebar (removing it from a quarter)
+    sidebarDropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('active');
+      
+      if (draggedSquare && draggedFromQuarter) {
+        // Remove the quarter-occupied class
+        draggedFromQuarter.classList.remove('quarter-occupied');
+        // Remove the square from the quarter
+        draggedSquare.remove(); // Key line that removes the dragged square
+        draggedFromQuarter = null;
+      }
+    });
+
+    // Handler for when drag starts
+    function dragStart(e) {
+      draggedSquare = this; // Store reference to dragged element
+      e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+      
+      // Check if this square is from a quarter
+      const quarterParent = this.closest('.quarter');
+      if (quarterParent) {
+        draggedFromQuarter = quarterParent;
+      } else {
+        draggedFromQuarter = null;
+      }
+      
+      // Make the dragged square semi-transparent
+      setTimeout(() => {
+        this.style.opacity = '0.5';
+      }, 0);
+    }
+
+    // Handler for when drag ends
+    function dragEnd() {
+      this.style.opacity = '1'; // Restore opacity
+    }
+
+    // Handler for dragover event on quarters
+    function dragOver(e) {
+      e.preventDefault(); // Allow dropping
+    }
+
+    // Handler for when dragged item enters a quarter
+    function dragEnter(e) {
+      e.preventDefault();
+      // Only highlight if the quarter is empty
+      if (!this.querySelector('.dropped-square')) {
+        this.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+      }
+    }
+
+    // Handler for when dragged item leaves a quarter
+    function dragLeave() {
+      this.style.backgroundColor = ''; // Remove highlight
+    }
+
+    // Handler for dropping a square onto a quarter
+    function dropOnQuarter(e) {
+      e.preventDefault();
+      this.style.backgroundColor = ''; // Remove highlight
+      
+      if (draggedSquare) {
+        // Only proceed if the quarter is empty
+        if (!this.querySelector('.dropped-square')) {
+          // If dragged from sidebar, create a new square in the quarter
+          if (!draggedFromQuarter) {
+            // Clone the square's properties for a new dropped square
+            const clonedSquare = document.createElement('div');
+            clonedSquare.className = `dropped-square ${draggedSquare.dataset.type}`;
+            clonedSquare.textContent = draggedSquare.textContent;
+            clonedSquare.dataset.number = draggedSquare.dataset.number;
+            clonedSquare.dataset.color = draggedSquare.dataset.color;
+            clonedSquare.dataset.originalType = draggedSquare.dataset.type;
+            clonedSquare.draggable = true;
+            
+            // Add drag events to the dropped square so it can be moved/removed
+            clonedSquare.addEventListener('dragstart', dragStart);
+            clonedSquare.addEventListener('dragend', dragEnd);
+            
+            // Mark this quarter as occupied
+            this.classList.add('quarter-occupied');
+            this.appendChild(clonedSquare);
+          } 
+          // If dragged from another quarter, move it to this quarter
+          else if (draggedFromQuarter !== this) {
+            // Remove from previous quarter
+            draggedFromQuarter.classList.remove('quarter-occupied');
+            
+            // Move to this quarter
+            this.appendChild(draggedSquare);
+            this.classList.add('quarter-occupied');
+            
+            // Reset draggedFromQuarter
+            draggedFromQuarter = null;
+          }
+        }
+      }
+    }
+
+    // Set up search functionality
+    searchInput.addEventListener('input', () => {
+      const searchTerm = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+      
+      // Process all squares based on search term
+      smallSquares.forEach(square => {
+        // Only filter sidebar squares, not the ones in quarters
+        if (square.closest('.quarter')) return;
+        
+        const squareNumber = square.dataset.number;
+        const squareColor = square.dataset.color;
+        
+        if (searchTerm === '') {
+          // If search is empty, show all squares
+          square.classList.remove('hidden-square');
+          square.style.order = ''; // Reset the order
+        } else if (
+          // Match by number
+          squareNumber === searchTerm || 
+          // Match by color
+          squareColor.includes(searchTerm)
+        ) {
+          // Show matching squares
+          square.classList.remove('hidden-square');
+          
+          // Set order to move matching squares to the beginning
+          square.style.order = -(24 - visibleCount);
+          visibleCount++;
+        } else {
+          // Hide non-matching squares
+          square.classList.add('hidden-square');
+          square.style.order = ''; // Reset the order
+        }
+      });
+    });
+  </script>
+</body>
+</html>
