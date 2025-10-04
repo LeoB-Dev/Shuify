@@ -5,7 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+<style>
+    body {
+        background-color:#D2B48C; /* prevents flash by replacing background with the same colour */ 
+        background-image: url("background.png");
+        background-size: 100% auto;  
+        background-position: top center;
+        font-family: sans-serif;
+        margin:2% 10%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #side-coins {
+        height: 100vh;
+        /* width: 100%; */
+        aspect-ratio: 516/1031;
+    }
+
+</style>
 <body>
-    Sign in
+    <img id="side-coins" src="side-coins.png" alt="coins">
 </body>
 </html>
