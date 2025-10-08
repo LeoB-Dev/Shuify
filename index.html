@@ -10,7 +10,7 @@
     body {
         display: flex;
         flex-direction: column;
-        margin:2% 10%;
+        /* margin:2% 10%; */
         background-color:#D2B48C;
         background-image: url("background.png");
         background-size: 100% auto;  
@@ -19,11 +19,11 @@
         font-family: sans-serif;
     }
 
-    .main-section {
+    .middle-section {
         display: flex;
         flex-direction: column;
         align-items: center;
-        flex: 1; /* Take up remaining space. */
+        /* flex: 1; Take up remaining space. */
     }
 
     #shuify-name {
@@ -42,14 +42,6 @@
     .right-of-top-bar {
         width: 50%;
         font-size: smaller;
-    }
-
-    .bottom-bar {
-        clear: both;
-        position: relative;
-        z-index: 10;
-        height: 3em;
-        margin-top: -3em;
     }
 
     #descriptive-header, #lower-header {
@@ -89,10 +81,9 @@
         max-width: 500px;
     } */
 
-    #fp-castle {
+    #isometric-city {
         width: 100%;
         height: auto;
-        max-width: 500px; /* Optional: limit width */
     }
 
     .hyperlink {
@@ -115,13 +106,15 @@
             </div>
     </div>
 
-    <div class="main-section">
+    <div class="middle-section">
         <h1 id="descriptive-header">Add Feng Shui to Your Spaces. Clear your mind and open your soul.</h1>
         <h1 id="lower-header">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1>
         <button id="middle-button">View More Details</button>
     
         <!-- <img id="fp-castle" src="castle-2-bg.png" alt="castle"> -->
     </div>
+
+    <img id="isometric-city" src="isometric-city.jpg" alt="iso city">
 
     <div class="bottom-bar">
             <h1 id="shuify-name">Shuify</h1>
