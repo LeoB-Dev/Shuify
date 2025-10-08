@@ -7,7 +7,7 @@ https://stackoverflow.com/questions/15649244/responsive-font-size-in-css
 
 - Footer is disappearing when I make the page narrower
 
-
+- Needs to add another container for all the content apart from the image and the footer, remove css from body and add to this new container
 My Squares
 - Art will be created with Rive
 

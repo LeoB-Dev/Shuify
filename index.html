@@ -2,21 +2,21 @@
 <html>
 <head>
 <style>
-    body, html {
+    body {
         margin: 0;
         padding: 0;
-    }
-    
-    body {
-        display: flex;
-        flex-direction: column;
-        /* margin:2% 10%; */
         background-color:#D2B48C;
         background-image: url("background.png");
         background-size: 100% auto;  
-        background-attachment: scroll;  
-        min-height: 265vh;
+        background-attachment: scroll;
         font-family: sans-serif;
+        min-height: 265vh;
+    }
+    
+    .section-1 {
+        display: flex;
+        flex-direction: column;
+        margin:2% 10%;
     }
 
     .middle-section {
@@ -72,18 +72,10 @@
         margin: 0;
     }
 
-    /* .fp-container {
-        display: flex;
-        flex-direction: column;
-        left: 0;
-        top: 0;
-        height: 100vh;
-        max-width: 500px;
-    } */
-
     #isometric-city {
         width: 100%;
         height: auto;
+        flex: 1;
     }
 
     .hyperlink {
@@ -91,12 +83,11 @@
         color: black;
     }
 
-    
-
 </style>
 </head>
 <body>
-    <div class="top-bar">
+    <div class="section-1">
+        <div class="top-bar">
             <h1 id="shuify-name">Shuify</h1>
             <div class="right-of-top-bar">
                 <a href="my-rooms.html" class="hyperlink">My Rooms</a>
@@ -104,15 +95,15 @@
                 <a href="items.html" class="hyperlink">Items</a>
                 <a href="sign-in.html" class="hyperlink">Sign In</a>
             </div>
-    </div>
+        </div>
 
-    <div class="middle-section">
-        <h1 id="descriptive-header">Add Feng Shui to Your Spaces. Clear your mind and open your soul.</h1>
-        <h1 id="lower-header">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1>
-        <button id="middle-button">View More Details</button>
-    
-        <!-- <img id="fp-castle" src="castle-2-bg.png" alt="castle"> -->
+        <div class="middle-section">
+            <h1 id="descriptive-header">Add Feng Shui to Your Spaces. Clear your mind and open your soul.</h1>
+            <h1 id="lower-header">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1>
+            <button id="middle-button">View More Details</button>
+        </div>
     </div>
+    
 
     <img id="isometric-city" src="isometric-city.jpg" alt="iso city">
 
