@@ -39,6 +39,12 @@
         margin-left: 33px;
         margin-right: 17%;
         font-size: medium;
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+
+    #header-2 {
+        margin-bottom: 45px;
     }
 
     .main-form {
@@ -46,8 +52,12 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        /*Justify content isn't doing anything*/
+        /*Justify content isn't doing anything, there is a strange gap between the form and the header*/
         background-color: antiquewhite;
+    }
+
+    #header-3 {
+        font-size: medium;
     }
 
     .box {
@@ -72,8 +82,14 @@
     }
 
     #ca-button {
+        margin-top: 16px;
         width: 150px;
     }
+
+    #question-1 {
+        margin-right: 3px;
+    }
+    
 </style>
 <body>
     <img id="side-coins" src="side-coins.png" alt="coins">
@@ -81,7 +97,7 @@
         <h3 id="header-1">This is not a real online service! You know you need something like this in yourn life ton help you realise your deepest dreams. Sign up now to get started.</h3>
         <h3 id="header-2">You know you want to</h3>
         <form class="main-form">
-            <h3 id="header-3">Let's do this!<h3></h3>
+            <h3 id="header-3">Let's do this!</h3>
             <div class="form-top">
                 <div class="box">
                     <label for="fname">First Name</label>
@@ -115,7 +131,7 @@
         </form>
         <button id="ca-button">Create Account</button>
         <div id="account">
-            <p>Already have an account?</p>
+            <p id="question-1">Already have an account? </p>
             <a href="my-rooms.html" class="hyperlink"> Log in</a>
         </div>
     </div>
