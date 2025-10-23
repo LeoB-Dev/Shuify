@@ -30,16 +30,23 @@
     /* Content area takes up remaining 2/3 */
     .content {
         margin-left: 33.33vw;
-        padding: 120px 25% 120px 3%;
+        padding-top: 120px;
         display: flex;
         flex-direction: column;
     }
 
     .main-form {
+        height: 320px;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
+        flex-direction: column;
+        /* align-items: center; */
+        /* justify-content: space-between; */
         background-color: antiquewhite;
+        /* I think they actually need to be in rows */
+    }
+
+    #header-3 {
+        align-self: flex-start;
     }
 
     .box {
@@ -52,33 +59,39 @@
         display: flex;
         align-items: center;
     }
+
+    .form-top, .form-middle, .form-bottom {
+        display: flex;
+    }
 </style>
 <body>
     <img id="side-coins" src="side-coins.png" alt="coins">
     <div class="content">
-        <h3 id="top-text-header">This is not a real online service! You know you need something like this in yourn life ton help you realise your deepest dreams. Sign up now to get started.</h3>
-        <h3 id="2nd-header">You know you want to</h3>
+        <h3 id="header-1">This is not a real online service! You know you need something like this in yourn life ton help you realise your deepest dreams. Sign up now to get started.</h3>
+        <h3 id="header-2">You know you want to</h3>
         <form class="main-form">
-            <h3 id="3rd-header">Let's do this!<h3></h3>
-            <div class="left-form">
+            <h3 id="header-3">Let's do this!<h3></h3>
+            <div class="form-top">
                 <div class="box">
                     <label for="fname">First Name</label>
                     <input type="text" id="fname" name="fname"><br><br>
                 </div>
                 <div class="box">
-                    <label for="lname">Last Name: </label>
-                    <input type="text" id="lname" name="lname"><br><br>
+                    <label for="phone">Phone Number </label>
+                    <input type="text" id="phone" name="phone"><br><br>
                 </div>
+            </div>
+            <div class="form-middle">
                 <div class="box">
                     <label for="email">Email: </label>
                     <input type="text" id="email" name="email"><br><br>
                 </div>
-            </div>
-            <div class="right-form">
                 <div class="box">
-                    <label for="phone">Phone Number </label>
-                    <input type="text" id="phone" name="phone"><br><br>
+                    <label for="lname">Last Name: </label>
+                    <input type="text" id="lname" name="lname"><br><br>
                 </div>
+            </div>
+            <div class="form-bottom">
                 <div class="box">
                     <label for="passwd">Password: </label>
                     <input type="text" id="passwd" name="passwd"><br><br>
@@ -87,8 +100,6 @@
                     <label for="cnfm-passwd">Confirm Password: </label>
                     <input type="text" id="cnfm-passwd" name="cnfm-passwd"><br><br>
                 </div>
-                
-                
             </div>
         </form>
         <button>Create Account</button>
