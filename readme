@@ -1,3 +1,7 @@
+To Do list:
+
+- Grab the list of notes from my my-rooms page on my mac
+
 Homepage
 - text over image:https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_image_text 
 
@@ -9,7 +13,7 @@ https://stackoverflow.com/questions/15649244/responsive-font-size-in-css
 https://www.youtube.com/watch?v=U8smiWQ8Seg
  This is also a good looking website 
 
-- Footer is disappearing when I make the page narrower
+https://www.youtube.com/watch?v=8MaCTDkoVd8 - Position sticky (base upon this and todoist page)
 
 - Needs to add another container for all the content apart from the image and the footer, remove css from body and add to this new container
 My Squares
@@ -23,14 +27,19 @@ Items
 
 
 Sign In
-- form is now not submitting, doesn't submit in original code snippet either 
-
-- Create page button may need to be included in the form container
+- Validating passwords: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_password_val 
 
 Form Validation:
 - /* The action attribute defines the location (URL) where the form's collected data should be sent when it is submitted.
 
 The method attribute defines which HTTP method to send the data with (usually get or post). */
+
+Rooms 
+https://codepen.io/DrKain/pen/RaOmGx
+https://codepen.io/TemplateDev/pen/KwKRRJm 
+
+
+
 
 
 

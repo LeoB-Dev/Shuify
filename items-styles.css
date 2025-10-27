@@ -1,0 +1,146 @@
+* {
+    box-sizing: border-box;
+}
+
+body,
+html {
+   color: #ccc;
+    background: #262626;
+    font-family: monospace;
+    height: 100%;
+    width: 100%;
+   font-size: 13pt;
+}
+
+.wrapper {
+    position: absolute;
+    width: 590px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* <?> 1. Moves element to the central position*/
+}
+
+.floor {
+    transform: rotateX(55deg) rotateZ(45deg); /* <?> 2. Turns grid into iso grid */
+    transform-style: preserve-3d; /* <?> 3. Does not seem to do anything */
+    font-size: 0;
+}
+
+
+.floor .tile {
+    font-size: 11pt;
+    color: #ccc;
+    display: inline-block; /* <?> 3. grid will turn into a single row without this*/
+    background: #111;
+    width: 48px;
+    height: 48px;
+    margin: 0;
+    box-shadow: 0 0 0 .1em hsla(0, 0%, 0%, .2); /* <?> 4. Doesn't seem to do anything */
+    border: solid 1px gray;
+    line-height: 48px; /* <?> 5. Doesn't seem to do anything */
+    text-align: center; /* <?> 6. Doens't seem necessary */
+    position: relative; /* <?> 7. Doesn't seem to do anything */
+    vertical-align: top; /* <?> 8. Doesnt seem to do anything */
+}
+
+.floor .player { /* <?> How come it says .player when the element is called player blue */
+    position: absolute;
+    z-index: 1;
+    width: 47px;
+    height: 47px;
+    border-radius: 3px; 
+    transform-style: preserve-3d; /* <?> 9. Doesn't seem to do anything*/
+    -webkit-transition: all 250ms; /* <?> 10. Used for older compatibility only*/
+    -moz-transition: all 250ms; /* <?> 11. */
+    -ms-transition: all 250ms; /* <?> 12. */
+    -o-transition: all 250ms; /* <?> 13. */
+    transition: all 250ms; /* <?> 14. Also does not seem to do anything */
+   opacity: 1;
+}
+
+.floor .player.die{
+  animation: fallanddie 0.5s; /* <?> 15. Refers to animation created at bottom*/
+  animation-fill-mode: forwards; /* <?> 16. The element will retain the style values that is set by the last keyframe (depends on animation-direction and animation-iteration-count) - namely it will be transparent. */
+}
+
+.floor .player div {
+    border: solid 1px rgba(0,0,0,.5);
+    position: absolute;
+    width: 47px;
+    height: 47px;
+    border-radius: 3px;
+    transform-style: preserve-3d; /*<?> 17. Also does not seem to do anything*/
+    -webkit-transform-style: preserve-3d; 
+    -moz-transform-style: preserve-3d;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.floor .player .front {
+    transform-origin: 50% 100%; /* <?> 18. Doesn't seem to do anything */
+    -webkit-transform-origin: 50% 100%;
+    -moz-transform-origin: 50% 100%;
+    transform: rotateX(-90deg); /* <?> 19. Doesn't seem to do anything */
+    -webkit-transform: rotateX(-90deg);
+    -moz-transform: rotateX(-90deg);
+}
+
+.floor .player .top {
+    transform-origin: 50% 0%; /* <?> 20. Doesn't seem to do anything */
+    transform: rotateX(-90deg); /* <?> 21. Doesn't seem to do anything. But when I commented out this and the 4 below, the player disappears*/
+    -webkit-transform-origin: 50% 0%;
+    -webkit-transform: rotateX(-90deg);
+    -moz-transform-origin: 50% 0%;
+    -moz-transform: rotateX(-90deg);
+}
+
+.floor .player .right {
+    transform-origin: 100% 50%;
+    transform: rotateY(90deg);
+    -webkit-transform-origin: 100% 50%;
+    -webkit-transform: rotateY(90deg);
+    -moz-transform-origin: 100% 50%;
+    -moz-transform: rotateY(90deg);
+}
+
+
+.floor .player.red div{
+    background: rgba(255, 0, 0, 0.5); /* <?> 22. What is this? */
+}
+
+.floor .player.blue div{
+   /* I know it's not blue */
+    background: rgba(255, 255, 255, 1);
+}
+
+.floor .player.green div{
+    background: rgba(0, 255, 0, 0.5); /* <?> 23. What is this? */
+}
+
+.youdied{
+   color: gray; /* <?> 24. What is this? */
+}
+.youdied:before{
+   color: transparent;
+   content: "* "; /* <?> 25. What is this? */
+}
+
+@keyframes fallanddie { /* <?> 26. What is keyframes? */
+  from {
+    z-index: -1;
+    opacity: 1;
+    transform: translateZ(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateZ(-150px); /* <?> 27. How does this work? */
+  }
+}
+
+.warning{
+   position: absolute;
+   top: 5px;
+   left: 5px;
+   font-size: 13px;
+   color: rgba(150,50,50,1);
+}
+
