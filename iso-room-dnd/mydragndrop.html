@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drag and drop</title>
+    <script src="mydragndrop.js" defer></script>
     <style>
 
         * {
@@ -75,9 +76,19 @@
             left: 1.5px;
         }
 
+        #player {
+            height: 24px;
+            width: 24px;
+            background: black;
+            transform: rotateX(55deg) rotateZ(-45deg);
+        }
+
     </style>
 </head>
 <body>
+
+    <div id="player"></div>
+
     <div id="room">
         <div id="walls">
             <div id="left-wall">
