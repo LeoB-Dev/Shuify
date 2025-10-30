@@ -1,5 +1,6 @@
-const item = document.querySelector("#player");
-const gridBottom = document.querySelector(".tile-bottom");
+const item = document.querySelector(".player");
+const slots = document.querySelectorAll(".tile-bottom");
+
 
 let currentMouseX = 0;
 let currentMouseY = 0;
@@ -8,6 +9,10 @@ let offsetY = 0;
 let activeItem = null;
 let lastSlot = null;
 let activeSlot = null;
+
+$.get("index.html", function(data){
+    $("#nav").replaceWith(data);
+});
 
 document.addEventListener("mousemove", function (event) {
     if(activeItem) {
@@ -26,6 +31,25 @@ document.addEventListener("mousemove", function (event) {
     }
 });
 
+document.addEventListener("mouseup", function () {
+    if (activeItem) {
+        if (activeSlot) {
+            activeSlot.appendChild(activeItem);
+        } else if (lastSlot) {
+        lastSlot.appendChild(activeItem);
+        }
+
+    activeItem.style.position = "relative";
+    activeItem.style.left = "0px";
+    activeItem.style.top = "0px";
+    // activeItem.style.width = "100%";
+    // activeItem.style.height = "100%";
+    
+    activeItem = null;
+    activeSlot = null;
+    }
+});
+
 item.addEventListener("mousedown", function (event) {
     activeItem = item;
     lastSlot = item.parentNode;
@@ -38,4 +62,22 @@ item.addEventListener("mousedown", function (event) {
 
     item.style.left = `${event.clientX - offsetX}px`;
     item.style.top = `${event.clientY - offsetY}px`;
-})
+});
+
+
+slots.forEach((slot) => {
+    slot.addEventListener("mouseup", function () {
+        if (activeItem) {
+            slot.appendChild(activeItem);
+
+            activeItem.style.position = "relative";
+            activeItem.style.transform = "none";
+            activeItem.style.left = "0px";
+            activeItem.style.top = "0px";
+            // activeItem.style.width = "100%";
+            // activeItem.style.height = "100%";
+
+            activeItem = null;
+        }
+    });
+});
