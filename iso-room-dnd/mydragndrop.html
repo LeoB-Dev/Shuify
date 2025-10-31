@@ -11,14 +11,7 @@
     <script src="mydragndrop.js" defer></script>
 
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
             height: 100vh;
             overflow: hidden;
             margin: 0;
@@ -27,14 +20,30 @@
             background-color: #f2f2f2;
         }
 
-        #main-content {
+        #overall-content {
             display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #central-content {
+            display: flex;
+            flex: 1;
+        }
+
+        #sidebar {
+            width: 25%;
+            background-color: lightgray;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #room {
             display: flex;
             flex-direction: column;
             align-items: center;
+            align-self: center;
         }
 
         #walls {
@@ -97,454 +106,453 @@
     </style>
 </head>
 <body>
-
-    <div id="nav"></div>
-
-    <div id="main-content">
-        <div id="sidebar">
-            <div class="player"></div>
-        </div>
-        <div id="room">
-            <div id="walls">
-                <div id="left-wall">
-                    <div class="row" id="row-11-bottom">
-                        <div data-cords='[0,0]' class="tile-left"></div>
-                        <div data-cords='[0,1]' class="tile-left"></div>
-                        <div data-cords='[0,2]' class="tile-left"></div>
-                        <div data-cords='[0,3]' class="tile-left"></div>
-                        <div data-cords='[0,4]' class="tile-left"></div>
-                        <div data-cords='[0,5]' class="tile-left"></div>
-                        <div data-cords='[0,6]' class="tile-left"></div>
-                        <div data-cords='[0,7]' class="tile-left"></div>
-                        <div data-cords='[0,8]' class="tile-left"></div>
-                        <div data-cords='[0,9]' class="tile-left"></div>
-                        <div data-cords='[0,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-10-bottom">
-                        <div data-cords='[1,0]' class="tile-left"></div>
-                        <div data-cords='[1,1]' class="tile-left"></div>
-                        <div data-cords='[1,2]' class="tile-left"></div>
-                        <div data-cords='[1,3]' class="tile-left"></div>
-                        <div data-cords='[1,4]' class="tile-left"></div>
-                        <div data-cords='[1,5]' class="tile-left"></div>
-                        <div data-cords='[1,6]' class="tile-left"></div>
-                        <div data-cords='[1,7]' class="tile-left"></div>
-                        <div data-cords='[1,8]' class="tile-left"></div>
-                        <div data-cords='[1,9]' class="tile-left"></div>
-                        <div data-cords='[1,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-9-bottom">
-                        <div data-cords='[2,0]' class="tile-left"></div>
-                        <div data-cords='[2,1]' class="tile-left"></div>
-                        <div data-cords='[2,2]' class="tile-left"></div>
-                        <div data-cords='[2,3]' class="tile-left"></div>
-                        <div data-cords='[2,4]' class="tile-left"></div>
-                        <div data-cords='[2,5]' class="tile-left"></div>
-                        <div data-cords='[2,6]' class="tile-left"></div>
-                        <div data-cords='[2,7]' class="tile-left"></div>
-                        <div data-cords='[2,8]' class="tile-left"></div>
-                        <div data-cords='[2,9]' class="tile-left"></div>
-                        <div data-cords='[2,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-8-bottom">
-                        <div data-cords='[3,0]' class="tile-left"></div>
-                        <div data-cords='[3,1]' class="tile-left"></div>
-                        <div data-cords='[3,2]' class="tile-left"></div>
-                        <div data-cords='[3,3]' class="tile-left"></div>
-                        <div data-cords='[3,4]' class="tile-left"></div>
-                        <div data-cords='[3,5]' class="tile-left"></div>
-                        <div data-cords='[3,6]' class="tile-left"></div>
-                        <div data-cords='[3,7]' class="tile-left"></div>
-                        <div data-cords='[3,8]' class="tile-left"></div>
-                        <div data-cords='[3,9]' class="tile-left"></div>
-                        <div data-cords='[3,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-7-bottom">
-                        <div data-cords='[4,0]' class="tile-left"></div>
-                        <div data-cords='[4,1]' class="tile-left"></div>
-                        <div data-cords='[4,2]' class="tile-left"></div>
-                        <div data-cords='[4,3]' class="tile-left"></div>
-                        <div data-cords='[4,4]' class="tile-left"></div>
-                        <div data-cords='[4,5]' class="tile-left"></div>
-                        <div data-cords='[4,6]' class="tile-left"></div>
-                        <div data-cords='[4,7]' class="tile-left"></div>
-                        <div data-cords='[4,8]' class="tile-left"></div>
-                        <div data-cords='[4,9]' class="tile-left"></div>
-                        <div data-cords='[4,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-6-bottom">
-                        <div data-cords='[5,0]' class="tile-left"></div>
-                        <div data-cords='[5,1]' class="tile-left"></div>
-                        <div data-cords='[5,2]' class="tile-left"></div>
-                        <div data-cords='[5,3]' class="tile-left"></div>
-                        <div data-cords='[5,4]' class="tile-left"></div>
-                        <div data-cords='[5,5]' class="tile-left"></div>
-                        <div data-cords='[5,6]' class="tile-left"></div>
-                        <div data-cords='[5,7]' class="tile-left"></div>
-                        <div data-cords='[5,8]' class="tile-left"></div>
-                        <div data-cords='[5,9]' class="tile-left"></div>
-                        <div data-cords='[5,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-5-bottom">
-                        <div data-cords='[6,0]' class="tile-left"></div>
-                        <div data-cords='[6,1]' class="tile-left"></div>
-                        <div data-cords='[6,2]' class="tile-left"></div>
-                        <div data-cords='[6,3]' class="tile-left"></div>
-                        <div data-cords='[6,4]' class="tile-left"></div>
-                        <div data-cords='[6,5]' class="tile-left"></div>
-                        <div data-cords='[6,6]' class="tile-left"></div>
-                        <div data-cords='[6,7]' class="tile-left"></div>
-                        <div data-cords='[6,8]' class="tile-left"></div>
-                        <div data-cords='[6,9]' class="tile-left"></div>
-                        <div data-cords='[6,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-4-bottom">
-                        <div data-cords='[7,0]' class="tile-left"></div>
-                        <div data-cords='[7,1]' class="tile-left"></div>
-                        <div data-cords='[7,2]' class="tile-left"></div>
-                        <div data-cords='[7,3]' class="tile-left"></div>
-                        <div data-cords='[7,4]' class="tile-left"></div>
-                        <div data-cords='[7,5]' class="tile-left"></div>
-                        <div data-cords='[7,6]' class="tile-left"></div>
-                        <div data-cords='[7,7]' class="tile-left"></div>
-                        <div data-cords='[7,8]' class="tile-left"></div>
-                        <div data-cords='[7,9]' class="tile-left"></div>
-                        <div data-cords='[7,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-3-bottom">
-                        <div data-cords='[8,0]' class="tile-left"></div>
-                        <div data-cords='[8,1]' class="tile-left"></div>
-                        <div data-cords='[8,2]' class="tile-left"></div>
-                        <div data-cords='[8,3]' class="tile-left"></div>
-                        <div data-cords='[8,4]' class="tile-left"></div>
-                        <div data-cords='[8,5]' class="tile-left"></div>
-                        <div data-cords='[8,6]' class="tile-left"></div>
-                        <div data-cords='[8,7]' class="tile-left"></div>
-                        <div data-cords='[8,8]' class="tile-left"></div>
-                        <div data-cords='[8,9]' class="tile-left"></div>
-                        <div data-cords='[8,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-2-bottom">
-                        <div data-cords='[9,0]' class="tile-left"></div>
-                        <div data-cords='[9,1]' class="tile-left"></div>
-                        <div data-cords='[9,2]' class="tile-left"></div>
-                        <div data-cords='[9,3]' class="tile-left"></div>
-                        <div data-cords='[9,4]' class="tile-left"></div>
-                        <div data-cords='[9,5]' class="tile-left"></div>
-                        <div data-cords='[9,6]' class="tile-left"></div>
-                        <div data-cords='[9,7]' class="tile-left"></div>
-                        <div data-cords='[9,8]' class="tile-left"></div>
-                        <div data-cords='[9,9]' class="tile-left"></div>
-                        <div data-cords='[9,10]' class="tile-left"></div>
-                    </div>
-                    <div class="row" id="row-1-bottom">
-                        <div data-cords='[10,0]' class="tile-left"></div>
-                        <div data-cords='[10,1]' class="tile-left"></div>
-                        <div data-cords='[10,2]' class="tile-left"></div>
-                        <div data-cords='[10,3]' class="tile-left"></div>
-                        <div data-cords='[10,4]' class="tile-left"></div>
-                        <div data-cords='[10,5]' class="tile-left"></div>
-                        <div data-cords='[10,6]' class="tile-left"></div>
-                        <div data-cords='[10,7]' class="tile-left"></div>
-                        <div data-cords='[10,8]' class="tile-left"></div>
-                        <div data-cords='[10,9]' class="tile-left"></div>
-                        <div data-cords='[10,10]' class="tile-left"></div>
-                    </div>
-                </div>
-                <div id="right-wall">
-                    <div class="row" id="row-11-bottom">
-                        <div data-cords='[0,0]' class="tile-right"></div>
-                        <div data-cords='[0,1]' class="tile-right"></div>
-                        <div data-cords='[0,2]' class="tile-right"></div>
-                        <div data-cords='[0,3]' class="tile-right"></div>
-                        <div data-cords='[0,4]' class="tile-right"></div>
-                        <div data-cords='[0,5]' class="tile-right"></div>
-                        <div data-cords='[0,6]' class="tile-right"></div>
-                        <div data-cords='[0,7]' class="tile-right"></div>
-                        <div data-cords='[0,8]' class="tile-right"></div>
-                        <div data-cords='[0,9]' class="tile-right"></div>
-                        <div data-cords='[0,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-10-bottom">
-                        <div data-cords='[1,0]' class="tile-right"></div>
-                        <div data-cords='[1,1]' class="tile-right"></div>
-                        <div data-cords='[1,2]' class="tile-right"></div>
-                        <div data-cords='[1,3]' class="tile-right"></div>
-                        <div data-cords='[1,4]' class="tile-right"></div>
-                        <div data-cords='[1,5]' class="tile-right"></div>
-                        <div data-cords='[1,6]' class="tile-right"></div>
-                        <div data-cords='[1,7]' class="tile-right"></div>
-                        <div data-cords='[1,8]' class="tile-right"></div>
-                        <div data-cords='[1,9]' class="tile-right"></div>
-                        <div data-cords='[1,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-9-bottom">
-                        <div data-cords='[2,0]' class="tile-right"></div>
-                        <div data-cords='[2,1]' class="tile-right"></div>
-                        <div data-cords='[2,2]' class="tile-right"></div>
-                        <div data-cords='[2,3]' class="tile-right"></div>
-                        <div data-cords='[2,4]' class="tile-right"></div>
-                        <div data-cords='[2,5]' class="tile-right"></div>
-                        <div data-cords='[2,6]' class="tile-right"></div>
-                        <div data-cords='[2,7]' class="tile-right"></div>
-                        <div data-cords='[2,8]' class="tile-right"></div>
-                        <div data-cords='[2,9]' class="tile-right"></div>
-                        <div data-cords='[2,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-8-bottom">
-                        <div data-cords='[3,0]' class="tile-right"></div>
-                        <div data-cords='[3,1]' class="tile-right"></div>
-                        <div data-cords='[3,2]' class="tile-right"></div>
-                        <div data-cords='[3,3]' class="tile-right"></div>
-                        <div data-cords='[3,4]' class="tile-right"></div>
-                        <div data-cords='[3,5]' class="tile-right"></div>
-                        <div data-cords='[3,6]' class="tile-right"></div>
-                        <div data-cords='[3,7]' class="tile-right"></div>
-                        <div data-cords='[3,8]' class="tile-right"></div>
-                        <div data-cords='[3,9]' class="tile-right"></div>
-                        <div data-cords='[3,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-7-bottom">
-                        <div data-cords='[4,0]' class="tile-right"></div>
-                        <div data-cords='[4,1]' class="tile-right"></div>
-                        <div data-cords='[4,2]' class="tile-right"></div>
-                        <div data-cords='[4,3]' class="tile-right"></div>
-                        <div data-cords='[4,4]' class="tile-right"></div>
-                        <div data-cords='[4,5]' class="tile-right"></div>
-                        <div data-cords='[4,6]' class="tile-right"></div>
-                        <div data-cords='[4,7]' class="tile-right"></div>
-                        <div data-cords='[4,8]' class="tile-right"></div>
-                        <div data-cords='[4,9]' class="tile-right"></div>
-                        <div data-cords='[4,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-6-bottom">
-                        <div data-cords='[5,0]' class="tile-right"></div>
-                        <div data-cords='[5,1]' class="tile-right"></div>
-                        <div data-cords='[5,2]' class="tile-right"></div>
-                        <div data-cords='[5,3]' class="tile-right"></div>
-                        <div data-cords='[5,4]' class="tile-right"></div>
-                        <div data-cords='[5,5]' class="tile-right"></div>
-                        <div data-cords='[5,6]' class="tile-right"></div>
-                        <div data-cords='[5,7]' class="tile-right"></div>
-                        <div data-cords='[5,8]' class="tile-right"></div>
-                        <div data-cords='[5,9]' class="tile-right"></div>
-                        <div data-cords='[5,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-5-bottom">
-                        <div data-cords='[6,0]' class="tile-right"></div>
-                        <div data-cords='[6,1]' class="tile-right"></div>
-                        <div data-cords='[6,2]' class="tile-right"></div>
-                        <div data-cords='[6,3]' class="tile-right"></div>
-                        <div data-cords='[6,4]' class="tile-right"></div>
-                        <div data-cords='[6,5]' class="tile-right"></div>
-                        <div data-cords='[6,6]' class="tile-right"></div>
-                        <div data-cords='[6,7]' class="tile-right"></div>
-                        <div data-cords='[6,8]' class="tile-right"></div>
-                        <div data-cords='[6,9]' class="tile-right"></div>
-                        <div data-cords='[6,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-4-bottom">
-                        <div data-cords='[7,0]' class="tile-right"></div>
-                        <div data-cords='[7,1]' class="tile-right"></div>
-                        <div data-cords='[7,2]' class="tile-right"></div>
-                        <div data-cords='[7,3]' class="tile-right"></div>
-                        <div data-cords='[7,4]' class="tile-right"></div>
-                        <div data-cords='[7,5]' class="tile-right"></div>
-                        <div data-cords='[7,6]' class="tile-right"></div>
-                        <div data-cords='[7,7]' class="tile-right"></div>
-                        <div data-cords='[7,8]' class="tile-right"></div>
-                        <div data-cords='[7,9]' class="tile-right"></div>
-                        <div data-cords='[7,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-3-bottom">
-                        <div data-cords='[8,0]' class="tile-right"></div>
-                        <div data-cords='[8,1]' class="tile-right"></div>
-                        <div data-cords='[8,2]' class="tile-right"></div>
-                        <div data-cords='[8,3]' class="tile-right"></div>
-                        <div data-cords='[8,4]' class="tile-right"></div>
-                        <div data-cords='[8,5]' class="tile-right"></div>
-                        <div data-cords='[8,6]' class="tile-right"></div>
-                        <div data-cords='[8,7]' class="tile-right"></div>
-                        <div data-cords='[8,8]' class="tile-right"></div>
-                        <div data-cords='[8,9]' class="tile-right"></div>
-                        <div data-cords='[8,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-2-bottom">
-                        <div data-cords='[9,0]' class="tile-right"></div>
-                        <div data-cords='[9,1]' class="tile-right"></div>
-                        <div data-cords='[9,2]' class="tile-right"></div>
-                        <div data-cords='[9,3]' class="tile-right"></div>
-                        <div data-cords='[9,4]' class="tile-right"></div>
-                        <div data-cords='[9,5]' class="tile-right"></div>
-                        <div data-cords='[9,6]' class="tile-right"></div>
-                        <div data-cords='[9,7]' class="tile-right"></div>
-                        <div data-cords='[9,8]' class="tile-right"></div>
-                        <div data-cords='[9,9]' class="tile-right"></div>
-                        <div data-cords='[9,10]' class="tile-right"></div>
-                    </div>
-                    <div class="row" id="row-1-bottom">
-                        <div data-cords='[10,0]' class="tile-right"></div>
-                        <div data-cords='[10,1]' class="tile-right"></div>
-                        <div data-cords='[10,2]' class="tile-right"></div>
-                        <div data-cords='[10,3]' class="tile-right"></div>
-                        <div data-cords='[10,4]' class="tile-right"></div>
-                        <div data-cords='[10,5]' class="tile-right"></div>
-                        <div data-cords='[10,6]' class="tile-right"></div>
-                        <div data-cords='[10,7]' class="tile-right"></div>
-                        <div data-cords='[10,8]' class="tile-right"></div>
-                        <div data-cords='[10,9]' class="tile-right"></div>
-                        <div data-cords='[10,10]' class="tile-right"></div>
-                    </div>
-                </div>
+    <div id="overall-content">
+        <div id="nav"></div>
+        <div id="central-content">
+            <div id="sidebar">
+                <div class="player"></div>
             </div>
-            <div id="bottom-wall">
-                <div class="row" id="row-11-bottom">
-                    <div data-cords='[0,0]' class="tile-bottom"></div>
-                    <div data-cords='[0,1]' class="tile-bottom"></div>
-                    <div data-cords='[0,2]' class="tile-bottom"></div>
-                    <div data-cords='[0,3]' class="tile-bottom"></div>
-                    <div data-cords='[0,4]' class="tile-bottom"></div>
-                    <div data-cords='[0,5]' class="tile-bottom"></div>
-                    <div data-cords='[0,6]' class="tile-bottom"></div>
-                    <div data-cords='[0,7]' class="tile-bottom"></div>
-                    <div data-cords='[0,8]' class="tile-bottom"></div>
-                    <div data-cords='[0,9]' class="tile-bottom"></div>
-                    <div data-cords='[0,10]' class="tile-bottom"></div>
+            <div id="room">
+                <div id="walls">
+                    <div id="left-wall">
+                        <div class="row" id="row-11-bottom">
+                            <div data-cords='[0,0]' class="tile-left"></div>
+                            <div data-cords='[0,1]' class="tile-left"></div>
+                            <div data-cords='[0,2]' class="tile-left"></div>
+                            <div data-cords='[0,3]' class="tile-left"></div>
+                            <div data-cords='[0,4]' class="tile-left"></div>
+                            <div data-cords='[0,5]' class="tile-left"></div>
+                            <div data-cords='[0,6]' class="tile-left"></div>
+                            <div data-cords='[0,7]' class="tile-left"></div>
+                            <div data-cords='[0,8]' class="tile-left"></div>
+                            <div data-cords='[0,9]' class="tile-left"></div>
+                            <div data-cords='[0,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-10-bottom">
+                            <div data-cords='[1,0]' class="tile-left"></div>
+                            <div data-cords='[1,1]' class="tile-left"></div>
+                            <div data-cords='[1,2]' class="tile-left"></div>
+                            <div data-cords='[1,3]' class="tile-left"></div>
+                            <div data-cords='[1,4]' class="tile-left"></div>
+                            <div data-cords='[1,5]' class="tile-left"></div>
+                            <div data-cords='[1,6]' class="tile-left"></div>
+                            <div data-cords='[1,7]' class="tile-left"></div>
+                            <div data-cords='[1,8]' class="tile-left"></div>
+                            <div data-cords='[1,9]' class="tile-left"></div>
+                            <div data-cords='[1,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-9-bottom">
+                            <div data-cords='[2,0]' class="tile-left"></div>
+                            <div data-cords='[2,1]' class="tile-left"></div>
+                            <div data-cords='[2,2]' class="tile-left"></div>
+                            <div data-cords='[2,3]' class="tile-left"></div>
+                            <div data-cords='[2,4]' class="tile-left"></div>
+                            <div data-cords='[2,5]' class="tile-left"></div>
+                            <div data-cords='[2,6]' class="tile-left"></div>
+                            <div data-cords='[2,7]' class="tile-left"></div>
+                            <div data-cords='[2,8]' class="tile-left"></div>
+                            <div data-cords='[2,9]' class="tile-left"></div>
+                            <div data-cords='[2,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-8-bottom">
+                            <div data-cords='[3,0]' class="tile-left"></div>
+                            <div data-cords='[3,1]' class="tile-left"></div>
+                            <div data-cords='[3,2]' class="tile-left"></div>
+                            <div data-cords='[3,3]' class="tile-left"></div>
+                            <div data-cords='[3,4]' class="tile-left"></div>
+                            <div data-cords='[3,5]' class="tile-left"></div>
+                            <div data-cords='[3,6]' class="tile-left"></div>
+                            <div data-cords='[3,7]' class="tile-left"></div>
+                            <div data-cords='[3,8]' class="tile-left"></div>
+                            <div data-cords='[3,9]' class="tile-left"></div>
+                            <div data-cords='[3,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-7-bottom">
+                            <div data-cords='[4,0]' class="tile-left"></div>
+                            <div data-cords='[4,1]' class="tile-left"></div>
+                            <div data-cords='[4,2]' class="tile-left"></div>
+                            <div data-cords='[4,3]' class="tile-left"></div>
+                            <div data-cords='[4,4]' class="tile-left"></div>
+                            <div data-cords='[4,5]' class="tile-left"></div>
+                            <div data-cords='[4,6]' class="tile-left"></div>
+                            <div data-cords='[4,7]' class="tile-left"></div>
+                            <div data-cords='[4,8]' class="tile-left"></div>
+                            <div data-cords='[4,9]' class="tile-left"></div>
+                            <div data-cords='[4,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-6-bottom">
+                            <div data-cords='[5,0]' class="tile-left"></div>
+                            <div data-cords='[5,1]' class="tile-left"></div>
+                            <div data-cords='[5,2]' class="tile-left"></div>
+                            <div data-cords='[5,3]' class="tile-left"></div>
+                            <div data-cords='[5,4]' class="tile-left"></div>
+                            <div data-cords='[5,5]' class="tile-left"></div>
+                            <div data-cords='[5,6]' class="tile-left"></div>
+                            <div data-cords='[5,7]' class="tile-left"></div>
+                            <div data-cords='[5,8]' class="tile-left"></div>
+                            <div data-cords='[5,9]' class="tile-left"></div>
+                            <div data-cords='[5,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-5-bottom">
+                            <div data-cords='[6,0]' class="tile-left"></div>
+                            <div data-cords='[6,1]' class="tile-left"></div>
+                            <div data-cords='[6,2]' class="tile-left"></div>
+                            <div data-cords='[6,3]' class="tile-left"></div>
+                            <div data-cords='[6,4]' class="tile-left"></div>
+                            <div data-cords='[6,5]' class="tile-left"></div>
+                            <div data-cords='[6,6]' class="tile-left"></div>
+                            <div data-cords='[6,7]' class="tile-left"></div>
+                            <div data-cords='[6,8]' class="tile-left"></div>
+                            <div data-cords='[6,9]' class="tile-left"></div>
+                            <div data-cords='[6,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-4-bottom">
+                            <div data-cords='[7,0]' class="tile-left"></div>
+                            <div data-cords='[7,1]' class="tile-left"></div>
+                            <div data-cords='[7,2]' class="tile-left"></div>
+                            <div data-cords='[7,3]' class="tile-left"></div>
+                            <div data-cords='[7,4]' class="tile-left"></div>
+                            <div data-cords='[7,5]' class="tile-left"></div>
+                            <div data-cords='[7,6]' class="tile-left"></div>
+                            <div data-cords='[7,7]' class="tile-left"></div>
+                            <div data-cords='[7,8]' class="tile-left"></div>
+                            <div data-cords='[7,9]' class="tile-left"></div>
+                            <div data-cords='[7,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-3-bottom">
+                            <div data-cords='[8,0]' class="tile-left"></div>
+                            <div data-cords='[8,1]' class="tile-left"></div>
+                            <div data-cords='[8,2]' class="tile-left"></div>
+                            <div data-cords='[8,3]' class="tile-left"></div>
+                            <div data-cords='[8,4]' class="tile-left"></div>
+                            <div data-cords='[8,5]' class="tile-left"></div>
+                            <div data-cords='[8,6]' class="tile-left"></div>
+                            <div data-cords='[8,7]' class="tile-left"></div>
+                            <div data-cords='[8,8]' class="tile-left"></div>
+                            <div data-cords='[8,9]' class="tile-left"></div>
+                            <div data-cords='[8,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-2-bottom">
+                            <div data-cords='[9,0]' class="tile-left"></div>
+                            <div data-cords='[9,1]' class="tile-left"></div>
+                            <div data-cords='[9,2]' class="tile-left"></div>
+                            <div data-cords='[9,3]' class="tile-left"></div>
+                            <div data-cords='[9,4]' class="tile-left"></div>
+                            <div data-cords='[9,5]' class="tile-left"></div>
+                            <div data-cords='[9,6]' class="tile-left"></div>
+                            <div data-cords='[9,7]' class="tile-left"></div>
+                            <div data-cords='[9,8]' class="tile-left"></div>
+                            <div data-cords='[9,9]' class="tile-left"></div>
+                            <div data-cords='[9,10]' class="tile-left"></div>
+                        </div>
+                        <div class="row" id="row-1-bottom">
+                            <div data-cords='[10,0]' class="tile-left"></div>
+                            <div data-cords='[10,1]' class="tile-left"></div>
+                            <div data-cords='[10,2]' class="tile-left"></div>
+                            <div data-cords='[10,3]' class="tile-left"></div>
+                            <div data-cords='[10,4]' class="tile-left"></div>
+                            <div data-cords='[10,5]' class="tile-left"></div>
+                            <div data-cords='[10,6]' class="tile-left"></div>
+                            <div data-cords='[10,7]' class="tile-left"></div>
+                            <div data-cords='[10,8]' class="tile-left"></div>
+                            <div data-cords='[10,9]' class="tile-left"></div>
+                            <div data-cords='[10,10]' class="tile-left"></div>
+                        </div>
+                    </div>
+                    <div id="right-wall">
+                        <div class="row" id="row-11-bottom">
+                            <div data-cords='[0,0]' class="tile-right"></div>
+                            <div data-cords='[0,1]' class="tile-right"></div>
+                            <div data-cords='[0,2]' class="tile-right"></div>
+                            <div data-cords='[0,3]' class="tile-right"></div>
+                            <div data-cords='[0,4]' class="tile-right"></div>
+                            <div data-cords='[0,5]' class="tile-right"></div>
+                            <div data-cords='[0,6]' class="tile-right"></div>
+                            <div data-cords='[0,7]' class="tile-right"></div>
+                            <div data-cords='[0,8]' class="tile-right"></div>
+                            <div data-cords='[0,9]' class="tile-right"></div>
+                            <div data-cords='[0,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-10-bottom">
+                            <div data-cords='[1,0]' class="tile-right"></div>
+                            <div data-cords='[1,1]' class="tile-right"></div>
+                            <div data-cords='[1,2]' class="tile-right"></div>
+                            <div data-cords='[1,3]' class="tile-right"></div>
+                            <div data-cords='[1,4]' class="tile-right"></div>
+                            <div data-cords='[1,5]' class="tile-right"></div>
+                            <div data-cords='[1,6]' class="tile-right"></div>
+                            <div data-cords='[1,7]' class="tile-right"></div>
+                            <div data-cords='[1,8]' class="tile-right"></div>
+                            <div data-cords='[1,9]' class="tile-right"></div>
+                            <div data-cords='[1,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-9-bottom">
+                            <div data-cords='[2,0]' class="tile-right"></div>
+                            <div data-cords='[2,1]' class="tile-right"></div>
+                            <div data-cords='[2,2]' class="tile-right"></div>
+                            <div data-cords='[2,3]' class="tile-right"></div>
+                            <div data-cords='[2,4]' class="tile-right"></div>
+                            <div data-cords='[2,5]' class="tile-right"></div>
+                            <div data-cords='[2,6]' class="tile-right"></div>
+                            <div data-cords='[2,7]' class="tile-right"></div>
+                            <div data-cords='[2,8]' class="tile-right"></div>
+                            <div data-cords='[2,9]' class="tile-right"></div>
+                            <div data-cords='[2,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-8-bottom">
+                            <div data-cords='[3,0]' class="tile-right"></div>
+                            <div data-cords='[3,1]' class="tile-right"></div>
+                            <div data-cords='[3,2]' class="tile-right"></div>
+                            <div data-cords='[3,3]' class="tile-right"></div>
+                            <div data-cords='[3,4]' class="tile-right"></div>
+                            <div data-cords='[3,5]' class="tile-right"></div>
+                            <div data-cords='[3,6]' class="tile-right"></div>
+                            <div data-cords='[3,7]' class="tile-right"></div>
+                            <div data-cords='[3,8]' class="tile-right"></div>
+                            <div data-cords='[3,9]' class="tile-right"></div>
+                            <div data-cords='[3,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-7-bottom">
+                            <div data-cords='[4,0]' class="tile-right"></div>
+                            <div data-cords='[4,1]' class="tile-right"></div>
+                            <div data-cords='[4,2]' class="tile-right"></div>
+                            <div data-cords='[4,3]' class="tile-right"></div>
+                            <div data-cords='[4,4]' class="tile-right"></div>
+                            <div data-cords='[4,5]' class="tile-right"></div>
+                            <div data-cords='[4,6]' class="tile-right"></div>
+                            <div data-cords='[4,7]' class="tile-right"></div>
+                            <div data-cords='[4,8]' class="tile-right"></div>
+                            <div data-cords='[4,9]' class="tile-right"></div>
+                            <div data-cords='[4,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-6-bottom">
+                            <div data-cords='[5,0]' class="tile-right"></div>
+                            <div data-cords='[5,1]' class="tile-right"></div>
+                            <div data-cords='[5,2]' class="tile-right"></div>
+                            <div data-cords='[5,3]' class="tile-right"></div>
+                            <div data-cords='[5,4]' class="tile-right"></div>
+                            <div data-cords='[5,5]' class="tile-right"></div>
+                            <div data-cords='[5,6]' class="tile-right"></div>
+                            <div data-cords='[5,7]' class="tile-right"></div>
+                            <div data-cords='[5,8]' class="tile-right"></div>
+                            <div data-cords='[5,9]' class="tile-right"></div>
+                            <div data-cords='[5,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-5-bottom">
+                            <div data-cords='[6,0]' class="tile-right"></div>
+                            <div data-cords='[6,1]' class="tile-right"></div>
+                            <div data-cords='[6,2]' class="tile-right"></div>
+                            <div data-cords='[6,3]' class="tile-right"></div>
+                            <div data-cords='[6,4]' class="tile-right"></div>
+                            <div data-cords='[6,5]' class="tile-right"></div>
+                            <div data-cords='[6,6]' class="tile-right"></div>
+                            <div data-cords='[6,7]' class="tile-right"></div>
+                            <div data-cords='[6,8]' class="tile-right"></div>
+                            <div data-cords='[6,9]' class="tile-right"></div>
+                            <div data-cords='[6,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-4-bottom">
+                            <div data-cords='[7,0]' class="tile-right"></div>
+                            <div data-cords='[7,1]' class="tile-right"></div>
+                            <div data-cords='[7,2]' class="tile-right"></div>
+                            <div data-cords='[7,3]' class="tile-right"></div>
+                            <div data-cords='[7,4]' class="tile-right"></div>
+                            <div data-cords='[7,5]' class="tile-right"></div>
+                            <div data-cords='[7,6]' class="tile-right"></div>
+                            <div data-cords='[7,7]' class="tile-right"></div>
+                            <div data-cords='[7,8]' class="tile-right"></div>
+                            <div data-cords='[7,9]' class="tile-right"></div>
+                            <div data-cords='[7,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-3-bottom">
+                            <div data-cords='[8,0]' class="tile-right"></div>
+                            <div data-cords='[8,1]' class="tile-right"></div>
+                            <div data-cords='[8,2]' class="tile-right"></div>
+                            <div data-cords='[8,3]' class="tile-right"></div>
+                            <div data-cords='[8,4]' class="tile-right"></div>
+                            <div data-cords='[8,5]' class="tile-right"></div>
+                            <div data-cords='[8,6]' class="tile-right"></div>
+                            <div data-cords='[8,7]' class="tile-right"></div>
+                            <div data-cords='[8,8]' class="tile-right"></div>
+                            <div data-cords='[8,9]' class="tile-right"></div>
+                            <div data-cords='[8,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-2-bottom">
+                            <div data-cords='[9,0]' class="tile-right"></div>
+                            <div data-cords='[9,1]' class="tile-right"></div>
+                            <div data-cords='[9,2]' class="tile-right"></div>
+                            <div data-cords='[9,3]' class="tile-right"></div>
+                            <div data-cords='[9,4]' class="tile-right"></div>
+                            <div data-cords='[9,5]' class="tile-right"></div>
+                            <div data-cords='[9,6]' class="tile-right"></div>
+                            <div data-cords='[9,7]' class="tile-right"></div>
+                            <div data-cords='[9,8]' class="tile-right"></div>
+                            <div data-cords='[9,9]' class="tile-right"></div>
+                            <div data-cords='[9,10]' class="tile-right"></div>
+                        </div>
+                        <div class="row" id="row-1-bottom">
+                            <div data-cords='[10,0]' class="tile-right"></div>
+                            <div data-cords='[10,1]' class="tile-right"></div>
+                            <div data-cords='[10,2]' class="tile-right"></div>
+                            <div data-cords='[10,3]' class="tile-right"></div>
+                            <div data-cords='[10,4]' class="tile-right"></div>
+                            <div data-cords='[10,5]' class="tile-right"></div>
+                            <div data-cords='[10,6]' class="tile-right"></div>
+                            <div data-cords='[10,7]' class="tile-right"></div>
+                            <div data-cords='[10,8]' class="tile-right"></div>
+                            <div data-cords='[10,9]' class="tile-right"></div>
+                            <div data-cords='[10,10]' class="tile-right"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="row" id="row-10-bottom">
-                    <div data-cords='[1,0]' class="tile-bottom"></div>
-                    <div data-cords='[1,1]' class="tile-bottom"></div>
-                    <div data-cords='[1,2]' class="tile-bottom"></div>
-                    <div data-cords='[1,3]' class="tile-bottom"></div>
-                    <div data-cords='[1,4]' class="tile-bottom"></div>
-                    <div data-cords='[1,5]' class="tile-bottom"></div>
-                    <div data-cords='[1,6]' class="tile-bottom"></div>
-                    <div data-cords='[1,7]' class="tile-bottom"></div>
-                    <div data-cords='[1,8]' class="tile-bottom"></div>
-                    <div data-cords='[1,9]' class="tile-bottom"></div>
-                    <div data-cords='[1,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-9-bottom">
-                    <div data-cords='[2,0]' class="tile-bottom"></div>
-                    <div data-cords='[2,1]' class="tile-bottom"></div>
-                    <div data-cords='[2,2]' class="tile-bottom"></div>
-                    <div data-cords='[2,3]' class="tile-bottom"></div>
-                    <div data-cords='[2,4]' class="tile-bottom"></div>
-                    <div data-cords='[2,5]' class="tile-bottom"></div>
-                    <div data-cords='[2,6]' class="tile-bottom"></div>
-                    <div data-cords='[2,7]' class="tile-bottom"></div>
-                    <div data-cords='[2,8]' class="tile-bottom"></div>
-                    <div data-cords='[2,9]' class="tile-bottom"></div>
-                    <div data-cords='[2,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-8-bottom">
-                    <div data-cords='[3,0]' class="tile-bottom"></div>
-                    <div data-cords='[3,1]' class="tile-bottom"></div>
-                    <div data-cords='[3,2]' class="tile-bottom"></div>
-                    <div data-cords='[3,3]' class="tile-bottom"></div>
-                    <div data-cords='[3,4]' class="tile-bottom"></div>
-                    <div data-cords='[3,5]' class="tile-bottom"></div>
-                    <div data-cords='[3,6]' class="tile-bottom"></div>
-                    <div data-cords='[3,7]' class="tile-bottom"></div>
-                    <div data-cords='[3,8]' class="tile-bottom"></div>
-                    <div data-cords='[3,9]' class="tile-bottom"></div>
-                    <div data-cords='[3,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-7-bottom">
-                    <div data-cords='[4,0]' class="tile-bottom"></div>
-                    <div data-cords='[4,1]' class="tile-bottom"></div>
-                    <div data-cords='[4,2]' class="tile-bottom"></div>
-                    <div data-cords='[4,3]' class="tile-bottom"></div>
-                    <div data-cords='[4,4]' class="tile-bottom"></div>
-                    <div data-cords='[4,5]' class="tile-bottom"></div>
-                    <div data-cords='[4,6]' class="tile-bottom"></div>
-                    <div data-cords='[4,7]' class="tile-bottom"></div>
-                    <div data-cords='[4,8]' class="tile-bottom"></div>
-                    <div data-cords='[4,9]' class="tile-bottom"></div>
-                    <div data-cords='[4,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-6-bottom">
-                    <div data-cords='[5,0]' class="tile-bottom"></div>
-                    <div data-cords='[5,1]' class="tile-bottom"></div>
-                    <div data-cords='[5,2]' class="tile-bottom"></div>
-                    <div data-cords='[5,3]' class="tile-bottom"></div>
-                    <div data-cords='[5,4]' class="tile-bottom"></div>
-                    <div data-cords='[5,5]' class="tile-bottom"></div>
-                    <div data-cords='[5,6]' class="tile-bottom"></div>
-                    <div data-cords='[5,7]' class="tile-bottom"></div>
-                    <div data-cords='[5,8]' class="tile-bottom"></div>
-                    <div data-cords='[5,9]' class="tile-bottom"></div>
-                    <div data-cords='[5,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-5-bottom">
-                    <div data-cords='[6,0]' class="tile-bottom"></div>
-                    <div data-cords='[6,1]' class="tile-bottom"></div>
-                    <div data-cords='[6,2]' class="tile-bottom"></div>
-                    <div data-cords='[6,3]' class="tile-bottom"></div>
-                    <div data-cords='[6,4]' class="tile-bottom"></div>
-                    <div data-cords='[6,5]' class="tile-bottom"></div>
-                    <div data-cords='[6,6]' class="tile-bottom"></div>
-                    <div data-cords='[6,7]' class="tile-bottom"></div>
-                    <div data-cords='[6,8]' class="tile-bottom"></div>
-                    <div data-cords='[6,9]' class="tile-bottom"></div>
-                    <div data-cords='[6,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-4-bottom">
-                    <div data-cords='[7,0]' class="tile-bottom"></div>
-                    <div data-cords='[7,1]' class="tile-bottom"></div>
-                    <div data-cords='[7,2]' class="tile-bottom"></div>
-                    <div data-cords='[7,3]' class="tile-bottom"></div>
-                    <div data-cords='[7,4]' class="tile-bottom"></div>
-                    <div data-cords='[7,5]' class="tile-bottom"></div>
-                    <div data-cords='[7,6]' class="tile-bottom"></div>
-                    <div data-cords='[7,7]' class="tile-bottom"></div>
-                    <div data-cords='[7,8]' class="tile-bottom"></div>
-                    <div data-cords='[7,9]' class="tile-bottom"></div>
-                    <div data-cords='[7,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-3-bottom">
-                    <div data-cords='[8,0]' class="tile-bottom"></div>
-                    <div data-cords='[8,1]' class="tile-bottom"></div>
-                    <div data-cords='[8,2]' class="tile-bottom"></div>
-                    <div data-cords='[8,3]' class="tile-bottom"></div>
-                    <div data-cords='[8,4]' class="tile-bottom"></div>
-                    <div data-cords='[8,5]' class="tile-bottom"></div>
-                    <div data-cords='[8,6]' class="tile-bottom"></div>
-                    <div data-cords='[8,7]' class="tile-bottom"></div>
-                    <div data-cords='[8,8]' class="tile-bottom"></div>
-                    <div data-cords='[8,9]' class="tile-bottom"></div>
-                    <div data-cords='[8,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-2-bottom">
-                    <div data-cords='[9,0]' class="tile-bottom"></div>
-                    <div data-cords='[9,1]' class="tile-bottom"></div>
-                    <div data-cords='[9,2]' class="tile-bottom"></div>
-                    <div data-cords='[9,3]' class="tile-bottom"></div>
-                    <div data-cords='[9,4]' class="tile-bottom"></div>
-                    <div data-cords='[9,5]' class="tile-bottom"></div>
-                    <div data-cords='[9,6]' class="tile-bottom"></div>
-                    <div data-cords='[9,7]' class="tile-bottom"></div>
-                    <div data-cords='[9,8]' class="tile-bottom"></div>
-                    <div data-cords='[9,9]' class="tile-bottom"></div>
-                    <div data-cords='[9,10]' class="tile-bottom"></div>
-                </div>
-                <div class="row" id="row-1-bottom">
-                    <div data-cords='[10,0]' class="tile-bottom"></div>
-                    <div data-cords='[10,1]' class="tile-bottom"></div>
-                    <div data-cords='[10,2]' class="tile-bottom"></div>
-                    <div data-cords='[10,3]' class="tile-bottom"></div>
-                    <div data-cords='[10,4]' class="tile-bottom"></div>
-                    <div data-cords='[10,5]' class="tile-bottom"></div>
-                    <div data-cords='[10,6]' class="tile-bottom"></div>
-                    <div data-cords='[10,7]' class="tile-bottom"></div>
-                    <div data-cords='[10,8]' class="tile-bottom"></div>
-                    <div data-cords='[10,9]' class="tile-bottom"></div>
-                    <div data-cords='[10,10]' class="tile-bottom"></div>
+                <div id="bottom-wall">
+                    <div class="row" id="row-11-bottom">
+                        <div data-cords='[0,0]' class="tile-bottom"></div>
+                        <div data-cords='[0,1]' class="tile-bottom"></div>
+                        <div data-cords='[0,2]' class="tile-bottom"></div>
+                        <div data-cords='[0,3]' class="tile-bottom"></div>
+                        <div data-cords='[0,4]' class="tile-bottom"></div>
+                        <div data-cords='[0,5]' class="tile-bottom"></div>
+                        <div data-cords='[0,6]' class="tile-bottom"></div>
+                        <div data-cords='[0,7]' class="tile-bottom"></div>
+                        <div data-cords='[0,8]' class="tile-bottom"></div>
+                        <div data-cords='[0,9]' class="tile-bottom"></div>
+                        <div data-cords='[0,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-10-bottom">
+                        <div data-cords='[1,0]' class="tile-bottom"></div>
+                        <div data-cords='[1,1]' class="tile-bottom"></div>
+                        <div data-cords='[1,2]' class="tile-bottom"></div>
+                        <div data-cords='[1,3]' class="tile-bottom"></div>
+                        <div data-cords='[1,4]' class="tile-bottom"></div>
+                        <div data-cords='[1,5]' class="tile-bottom"></div>
+                        <div data-cords='[1,6]' class="tile-bottom"></div>
+                        <div data-cords='[1,7]' class="tile-bottom"></div>
+                        <div data-cords='[1,8]' class="tile-bottom"></div>
+                        <div data-cords='[1,9]' class="tile-bottom"></div>
+                        <div data-cords='[1,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-9-bottom">
+                        <div data-cords='[2,0]' class="tile-bottom"></div>
+                        <div data-cords='[2,1]' class="tile-bottom"></div>
+                        <div data-cords='[2,2]' class="tile-bottom"></div>
+                        <div data-cords='[2,3]' class="tile-bottom"></div>
+                        <div data-cords='[2,4]' class="tile-bottom"></div>
+                        <div data-cords='[2,5]' class="tile-bottom"></div>
+                        <div data-cords='[2,6]' class="tile-bottom"></div>
+                        <div data-cords='[2,7]' class="tile-bottom"></div>
+                        <div data-cords='[2,8]' class="tile-bottom"></div>
+                        <div data-cords='[2,9]' class="tile-bottom"></div>
+                        <div data-cords='[2,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-8-bottom">
+                        <div data-cords='[3,0]' class="tile-bottom"></div>
+                        <div data-cords='[3,1]' class="tile-bottom"></div>
+                        <div data-cords='[3,2]' class="tile-bottom"></div>
+                        <div data-cords='[3,3]' class="tile-bottom"></div>
+                        <div data-cords='[3,4]' class="tile-bottom"></div>
+                        <div data-cords='[3,5]' class="tile-bottom"></div>
+                        <div data-cords='[3,6]' class="tile-bottom"></div>
+                        <div data-cords='[3,7]' class="tile-bottom"></div>
+                        <div data-cords='[3,8]' class="tile-bottom"></div>
+                        <div data-cords='[3,9]' class="tile-bottom"></div>
+                        <div data-cords='[3,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-7-bottom">
+                        <div data-cords='[4,0]' class="tile-bottom"></div>
+                        <div data-cords='[4,1]' class="tile-bottom"></div>
+                        <div data-cords='[4,2]' class="tile-bottom"></div>
+                        <div data-cords='[4,3]' class="tile-bottom"></div>
+                        <div data-cords='[4,4]' class="tile-bottom"></div>
+                        <div data-cords='[4,5]' class="tile-bottom"></div>
+                        <div data-cords='[4,6]' class="tile-bottom"></div>
+                        <div data-cords='[4,7]' class="tile-bottom"></div>
+                        <div data-cords='[4,8]' class="tile-bottom"></div>
+                        <div data-cords='[4,9]' class="tile-bottom"></div>
+                        <div data-cords='[4,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-6-bottom">
+                        <div data-cords='[5,0]' class="tile-bottom"></div>
+                        <div data-cords='[5,1]' class="tile-bottom"></div>
+                        <div data-cords='[5,2]' class="tile-bottom"></div>
+                        <div data-cords='[5,3]' class="tile-bottom"></div>
+                        <div data-cords='[5,4]' class="tile-bottom"></div>
+                        <div data-cords='[5,5]' class="tile-bottom"></div>
+                        <div data-cords='[5,6]' class="tile-bottom"></div>
+                        <div data-cords='[5,7]' class="tile-bottom"></div>
+                        <div data-cords='[5,8]' class="tile-bottom"></div>
+                        <div data-cords='[5,9]' class="tile-bottom"></div>
+                        <div data-cords='[5,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-5-bottom">
+                        <div data-cords='[6,0]' class="tile-bottom"></div>
+                        <div data-cords='[6,1]' class="tile-bottom"></div>
+                        <div data-cords='[6,2]' class="tile-bottom"></div>
+                        <div data-cords='[6,3]' class="tile-bottom"></div>
+                        <div data-cords='[6,4]' class="tile-bottom"></div>
+                        <div data-cords='[6,5]' class="tile-bottom"></div>
+                        <div data-cords='[6,6]' class="tile-bottom"></div>
+                        <div data-cords='[6,7]' class="tile-bottom"></div>
+                        <div data-cords='[6,8]' class="tile-bottom"></div>
+                        <div data-cords='[6,9]' class="tile-bottom"></div>
+                        <div data-cords='[6,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-4-bottom">
+                        <div data-cords='[7,0]' class="tile-bottom"></div>
+                        <div data-cords='[7,1]' class="tile-bottom"></div>
+                        <div data-cords='[7,2]' class="tile-bottom"></div>
+                        <div data-cords='[7,3]' class="tile-bottom"></div>
+                        <div data-cords='[7,4]' class="tile-bottom"></div>
+                        <div data-cords='[7,5]' class="tile-bottom"></div>
+                        <div data-cords='[7,6]' class="tile-bottom"></div>
+                        <div data-cords='[7,7]' class="tile-bottom"></div>
+                        <div data-cords='[7,8]' class="tile-bottom"></div>
+                        <div data-cords='[7,9]' class="tile-bottom"></div>
+                        <div data-cords='[7,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-3-bottom">
+                        <div data-cords='[8,0]' class="tile-bottom"></div>
+                        <div data-cords='[8,1]' class="tile-bottom"></div>
+                        <div data-cords='[8,2]' class="tile-bottom"></div>
+                        <div data-cords='[8,3]' class="tile-bottom"></div>
+                        <div data-cords='[8,4]' class="tile-bottom"></div>
+                        <div data-cords='[8,5]' class="tile-bottom"></div>
+                        <div data-cords='[8,6]' class="tile-bottom"></div>
+                        <div data-cords='[8,7]' class="tile-bottom"></div>
+                        <div data-cords='[8,8]' class="tile-bottom"></div>
+                        <div data-cords='[8,9]' class="tile-bottom"></div>
+                        <div data-cords='[8,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-2-bottom">
+                        <div data-cords='[9,0]' class="tile-bottom"></div>
+                        <div data-cords='[9,1]' class="tile-bottom"></div>
+                        <div data-cords='[9,2]' class="tile-bottom"></div>
+                        <div data-cords='[9,3]' class="tile-bottom"></div>
+                        <div data-cords='[9,4]' class="tile-bottom"></div>
+                        <div data-cords='[9,5]' class="tile-bottom"></div>
+                        <div data-cords='[9,6]' class="tile-bottom"></div>
+                        <div data-cords='[9,7]' class="tile-bottom"></div>
+                        <div data-cords='[9,8]' class="tile-bottom"></div>
+                        <div data-cords='[9,9]' class="tile-bottom"></div>
+                        <div data-cords='[9,10]' class="tile-bottom"></div>
+                    </div>
+                    <div class="row" id="row-1-bottom">
+                        <div data-cords='[10,0]' class="tile-bottom"></div>
+                        <div data-cords='[10,1]' class="tile-bottom"></div>
+                        <div data-cords='[10,2]' class="tile-bottom"></div>
+                        <div data-cords='[10,3]' class="tile-bottom"></div>
+                        <div data-cords='[10,4]' class="tile-bottom"></div>
+                        <div data-cords='[10,5]' class="tile-bottom"></div>
+                        <div data-cords='[10,6]' class="tile-bottom"></div>
+                        <div data-cords='[10,7]' class="tile-bottom"></div>
+                        <div data-cords='[10,8]' class="tile-bottom"></div>
+                        <div data-cords='[10,9]' class="tile-bottom"></div>
+                        <div data-cords='[10,10]' class="tile-bottom"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
     <script>
 
     </script>
