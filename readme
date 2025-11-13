@@ -5,6 +5,28 @@ To Do list:
 - https://www.youtube.com/watch?v=U8smiWQ8Seg&t=311s
 - Add a toggle for snap on and move freely
 
+- Make the nav bar collapsible with animation
+Why it doesn't work:
+
+display has no "in-between" state
+You can't be "half block" or "75% none"
+It's binary: on or off
+Browser doesn't know how to animate it
+
+The workaround:
+css.sidebar {
+  opacity: 0;          /* Invisible but still there */
+  visibility: hidden;  /* Don't capture clicks */
+  transition: opacity 0.5s, visibility 0.5s;
+}
+
+.sidebar.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+Javascript therefore needs to be amended accordingly as all based on flex diplsay proepty.
+
 Homepage
 - text over image:https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_image_text 
 

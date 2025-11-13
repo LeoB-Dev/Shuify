@@ -103,3 +103,20 @@ function hideSidebar(){
     }
 }
 
+// function movePlayerSidebar(y){
+//     const PlayerSidebar = document.querySelector('#player-sidebar');
+//     if (y.matches) {
+//         document.body.style.backgroundColor = "yellow";
+//     } else {
+//         document.body.style.backgroundColor = "pink";
+//     }
+//     // https://www.w3schools.com/howto/howto_js_media_queries.asp
+
+// }
+
+// // create a MediaQueryList object
+// var y = window.matchMedia("(max-width: 750px)")
+
+// myFunction(x);
+
+
