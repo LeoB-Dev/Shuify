@@ -35,11 +35,11 @@ html {
     width: 48px;
     height: 48px;
     margin: 0;
-    box-shadow: 0 0 0 .1em hsla(0, 0%, 0%, .2); /* <?> 4. Doesn't seem to do anything */
+    box-shadow: 0 0 0 .1em hsla(0, 0%, 0%, .2); /* <?> 4. Just a slight shadow */
     border: solid 1px gray;
     line-height: 48px; /* <?> 5. Doesn't seem to do anything */
     text-align: center; /* <?> 6. Doens't seem necessary */
-    position: relative; /* <?> 7. Doesn't seem to do anything */
+    position: relative; /* <?> 7. Doesn't seem to do anything CONT FROM HERE */
     vertical-align: top; /* <?> 8. Doesnt seem to do anything */
 }
 

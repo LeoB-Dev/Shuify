@@ -35,8 +35,38 @@
             width: 25%;
             background-color: lightgray;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
+            min-width: 166px;
+        }
+
+        #sbar {
+            border-radius: 5px;
+            margin-top: 5%;
+            width: 90%;
+            height: 25px;
+            border: 1px solid white;
+        }
+
+        /* .player-container {
+            background-color: #219EBC;
+            border-radius: 10px;
+            width: 50%;
+            height: 25%;
+            z-index: 999;
+        } */
+
+        .player {
+            height: 24px;
+            width: 24px;
+            background: black;
+            transform: rotateX(55deg) rotateZ(-45deg);
+        }
+
+        #iso-bed {
+            width: 60%;
+            height: auto;
         }
 
         /* @media(max-width: 750px){
@@ -100,13 +130,6 @@
             left: 1.5px;
         }
 
-        .player {
-            height: 24px;
-            width: 24px;
-            background: black;
-            transform: rotateX(55deg) rotateZ(-45deg);
-        }
-
     </style>
 </head>
 <body>
@@ -114,7 +137,18 @@
         <div id="nav"></div>
         <div id="central-content">
             <div id="player-sidebar">
+                <input type="text" id="sbar" name="sbar" minlength="1" maxlength="50" autocomplete="given-name"><br><br>
+                <!-- <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div>
+                <div class="player-container"></div> -->
                 <div class="player"></div>
+                <img id="iso-bed" src="iso-bed-nobg.png" alt="bed">
             </div>
             <div id="room">
                 <div id="walls">
