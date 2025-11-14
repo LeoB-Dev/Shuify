@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag and drop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="//code.jquery.com/jquery.min.js"></script>
+    <script src="mydndgraphics.js" defer></script>
+
+    <style>
+        body {
+            height: 100vh;
+            overflow: hidden;
+            margin: 0;
+            align-items: center;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        #overall-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #main-content {
+            display: flex;
+            flex: 1;
+            width: 100%;
+        }
+
+        #player-sidebar {
+            width: 25%;
+            background-color: lightgray;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-width: 166px;
+        }
+
+        #iso-room {
+            width: 70%;
+            max-width: 670px;
+            height: auto;
+        }
+
+        #iso-bed {
+            width: 60%;
+            height: auto;
+        }
+
+        #central-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        #search-bar {
+            border-radius: 5px;
+            margin-top: 5%;
+            width: 90%;
+            height: 25px;
+            border: 1px solid white;
+        }
+
+        /* .player-container {
+            background-color: #219EBC;
+            border-radius: 10px;
+            width: 50%;
+            height: 25%;
+            z-index: 999;
+        } */
+
+        .player {
+            height: 24px;
+            width: 24px;
+            background: black;
+            transform: rotateX(55deg) rotateZ(-45deg);
+        }
+
+        @media(max-width: 800px){
+            #main-content {
+                flex-direction: column-reverse;
+            }
+            #player-sidebar {
+                flex-direction: row;
+                height: 180px;
+                width: 100%;
+                justify-content: space-evenly;
+            }
+
+            #iso-bed {
+                height: 60%;
+                width: auto;
+            }
+
+            #search-bar {
+                width: 120px;
+            }
+        } 
+        
+
+    </style>
+</head>
+<body>
+    <div id="overall-content">
+        <div id="nav"></div>
+        <div id="main-content">
+            <div id="player-sidebar">
+                <input type="text" id="search-bar" name="search-bar" minlength="1" maxlength="50" autocomplete="given-name"><br><br>
+                <div class="player"></div>
+                <img id="iso-bed" src="iso-bed-nobg.png" alt="bed">
+            </div>
+            <div id="central-content">
+                <img id="iso-room" src="c-t-iso-room.png" alt="main-room">
+            </div>
+        </div>
+    </div>
+    <script>
+
+    </script>
+</body>
+</html>
