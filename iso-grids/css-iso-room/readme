@@ -13,3 +13,5 @@ Once wrapped in a container, this becomes straightforward:
 Apply transform: translate() to the parent container only. Set the transform-origin on the parent to control the pivot point for the entire group. All children move together as one unit.
 You can also use position: absolute or relative on the parent and adjust top/left, but transforms are generally smoother for animation and don't trigger layout recalculation.
 Pro tip: If you need to both move AND rotate/scale the group, keep the positioning transform on the parent and any rotation/scaling as a separate transform. CSS allows you to chain transforms: transform: translate(50%, 50%) rotate(45deg) scale(1.2).
+
+Use element.getBoundingClientRect().height to give the height of the top element

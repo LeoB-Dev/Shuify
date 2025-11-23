@@ -42,17 +42,12 @@
             min-width: 166px;
         }
 
-        #iso-room {
-            width: 70%;
-            max-width: 670px;
-            height: auto;
-        }
-
         #iso-bed {
             width: 22%;
             height: auto;
             cursor: pointer;
             position: relative;
+            z-index: 999;
         }
 
         .category-button {
@@ -68,6 +63,45 @@
             align-items: center;
             justify-content: center;
             flex: 1;
+        }
+
+        .container {
+            width: 55%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+        }
+
+        .left{
+            height: 50%;
+            width: 50%;
+            background-color: #3e8fe1;
+            position: absolute;
+            bottom: 50%;
+            transform: rotate(90deg) skewX(-30deg) scaleY(0.864);
+            transform-origin: bottom right;
+        }
+
+        .right{
+            height: 50%;
+            width: 50%;
+            background-color: #2870bd;
+            position: absolute;
+            bottom: 50%;
+            transform: rotate(-30deg) skewX(-30deg) scaleY(0.864);
+            transform-origin: bottom right;
+        }
+
+
+        .top{
+            /* Copy and use this as the small one*/
+            height: 50%;
+            width: 50%;
+            position: absolute;
+            background-color: #80bdfe;
+            transform-origin: 0 0;
+            bottom: 50%;
+            transform: rotate(210deg) skew(-30deg) scaleY(0.864);
+            transform-origin: bottom right;
         }
 
         #search-bar {
@@ -125,11 +159,14 @@
                 <div class="furn-container">
                     <img class="furniture" id="iso-bed" draggable="true" src="iso-bed-nobg.png" alt="bed">
                 </div>
-                
-                
             </div>
+
             <div id="central-content">
-                <img id="iso-room" src="c-t-iso-room.png" alt="main-room">
+                <div class="container">
+                    <div class="left"></div>
+                    <div class="right"></div>
+                    <div class="top"></div>
+                </div>
             </div>
         </div>
     </div>
