@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Isometric Grid - Code-Drawn Diamonds</title>
+		<style>
+			body {
+				margin: 0;
+				padding: 20px;
+				background: #2a2a2a;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				min-height: 100vh;
+			}
+			canvas {
+				background: #1a1a1a;
+				cursor: crosshair;
+			}
+		</style>
+		<script>	
+
+			window.onload = function () {
+				// Define the grid dimensions
+				var grid = {
+					width: 10,
+					height: 10
+				}
+
+				// Define tile dimensions (no image needed!)
+				// You can easily adjust these to change the grid size
+				var tileWidth = 64;   // Width of each diamond
+				var tileHeight = 32;  // Height of each diamond
+
+				var canvas = document.getElementById('myCanvas');
+				var c = canvas.getContext('2d');
+
+				// Store which tiles have been clicked
+				var tileMap = [];
+
+				// Listen for mouse movement instead of clicks
+				canvas.addEventListener('mousemove', handleMouseMove, false);
+
+				// Draw immediately (no need to wait for images to load!)
+				draw();
+
+				// Track which tile is currently being hovered
+				var hoveredRow = -1;
+				var hoveredCol = -1;
+
+
+				function handleMouseMove(e) {
+					// Get click position relative to canvas
+					var rect = canvas.getBoundingClientRect();
+					var mouseX = e.clientX - rect.left;
+					var mouseY = e.clientY - rect.top;
+
+					// Grid offset for centering
+					var gridOffsetX = (canvas.width / 2) - (tileWidth / 2);
+					var gridOffsetY = 0;
+
+					// Convert screen coordinates to grid coordinates
+					// Same math as before, but using our defined tileWidth/tileHeight
+					var col = (mouseY - gridOffsetY) * 2;
+					col = ((gridOffsetX + col) - mouseX) / 2;
+					
+					var row = ((mouseX + col) - tileHeight) - gridOffsetX;
+
+					row = Math.round(row / tileHeight);
+					col = Math.round(col / tileHeight);
+
+					// Check boundaries
+					if (row >= 0 && 
+						col >= 0 && 
+						row < grid.width &&
+						col < grid.height) {
+
+						// Update hovered tile coordinates
+						hoveredRow = row;
+						hoveredCol = col;
+						
+						// Redraw to show the hover effect
+						draw();
+					} else {
+						// Mouse is outside grid, clear hover
+						if (hoveredRow !== -1 || hoveredCol !== -1) {
+							hoveredRow = -1;
+							hoveredCol = -1;
+							draw();
+						}
+					}
+				}
+
+				
+				function draw() {
+					// Clear canvas
+					c.clearRect(0, 0, canvas.width, canvas.height);
+
+					// Loop through grid
+					for (var row = 0; row < grid.width; row++) {
+						for (var col = 0; col < grid.height; col++) {
+
+							// Calculate position using isometric formulas
+							var tilePositionX = (row - col) * (tileWidth / 2);
+							tilePositionX += (canvas.width / 2) - (tileWidth / 2);
+
+							var tilePositionY = (row + col) * (tileHeight / 2);
+
+							// Check if this tile is being hovered
+							var isHovered = (row === hoveredRow && col === hoveredCol);
+
+							// Draw the diamond using code
+							drawDiamond(tilePositionX, tilePositionY, tileWidth, tileHeight, isHovered);
+						}	
+					}
+				}
+
+				// NEW FUNCTION: Draw a diamond shape using canvas paths
+				function drawDiamond(x, y, width, height, hovered) {
+					// A diamond is 4 points connected:
+					//        top
+					//       /  \
+					//    left  right
+					//       \  /
+					//       bottom
+
+					// Calculate the 4 corner points of the diamond
+					var top = {
+						x: x + width / 2,  // Center horizontally
+						y: y                // Top of tile
+					};
+
+					var right = {
+						x: x + width,       // Right edge
+						y: y + height / 2   // Center vertically
+					};
+
+					var bottom = {
+						x: x + width / 2,   // Center horizontally
+						y: y + height       // Bottom of tile
+					};
+
+					var left = {
+						x: x,               // Left edge
+						y: y + height / 2   // Center vertically
+					};
+
+					// Begin drawing the path
+					c.beginPath();
+					c.moveTo(top.x, top.y);        // Start at top point
+					c.lineTo(right.x, right.y);    // Draw to right point
+					c.lineTo(bottom.x, bottom.y);  // Draw to bottom point
+					c.lineTo(left.x, left.y);      // Draw to left point
+					c.closePath();                  // Connect back to top
+
+					// Fill the diamond with different color when hovered
+					if (hovered) {
+						c.fillStyle = '#FFD700';  // Gold/yellow for hovered tile
+					} else {
+						c.fillStyle = '#4CAF50';  // Green for normal tiles
+					}
+					c.fill();
+
+					// Draw the outline/stroke
+					c.strokeStyle = '#2a2a2a';    // Dark outline
+					c.lineWidth = 2;
+					c.stroke();
+				}
+			}
+		</script>
+    </head>
+    <body>
+		<canvas id="myCanvas" width="800" height="600"></canvas>
+    </body>
+</html>

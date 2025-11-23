@@ -1,86 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Example 12 -  (Capturing click events and translating them
-           to matrix coordinates)
-    </title>
-    <script>
-        window.onload = function () {
-            var grid = {
-            width: 10,
-            height: 10
-        }
+	<head>
+		<meta charset="UTF-8" />
+		<title>Example 12 - (Capturing click events and translating them to matrix coordinates)</title>
+		<script>	
 
-            var canvas = document.getElementById('myCanvas');
-            var c = canvas.getContext('2d');
+			window.onload = function () {
+				// Define the grid dimensions - we'll have 10 rows and 10 columns of tiles
+				var grid = {
+					width: 10,
+					height: 10
+				}
 
-            var tileMap = [];
+				// Get reference to the canvas element and its 2D drawing context
+				var canvas = document.getElementById('myCanvas');
+				var c = canvas.getContext('2d');
 
-            var tile = new Image();
-            tile.src = "tile.png";
+				// This 2D array stores which tiles have been clicked
+				// tileMap[row][col] = 1 means that tile is filled
+				// If undefined/null, the tile is empty
+				var tileMap = [];
 
-            var dirt = new Image();
-            dirt.src = "dirt.png";
+				// Load the empty green diamond tile image
+				var tile = new Image();
+				tile.src = "iso-room-nc.png";
 
-            canvas.addEventListener('mousedown', handleMouseDown, false);
-            
-            tile.onload = function(){
-                draw();
-            }
+				// Load the filled brown diamond tile image
+				var dirt = new Image();
+				dirt.src = "dirt.png";
 
-            function handleMouseDown(e) {
-                var gridOffsetY = 0;
-                var gridOffsetX = 0;
+				// Listen for mouse clicks on the canvas
+				canvas.addEventListener('mousedown', handleMouseDown, false);
 
-                // Take into account the offset on the X axis caused
-                // by centering the grid horizonally
-                gridOffsetX += (canvas.width / 2) - (tile.width / 2);
-
-                var col = (e.clientY - gridOffsetY) * 2;
-                col = ((gridOffsetX + col) - e.clientX) / 2;
-
-                var row = ((e.clientX + col) - tile.height) - gridOffsetX;
-
-                row = Math.round(row / tile.height);
-                col = Math.round(col / tile.height);
-
-                // Check the boundaries 
-                if (row >= 0 &&
-                    col >= 0 &&
-                    row <= grid.width &&
-                    col <= grid.height) {
-                    tileMap[row] = (tileMap[row] === undefined) ? [] :
-                    tileMap[row];
-
-                    tileMap[row][col]  = 1;
+				// Once the tile image loads, draw the initial grid
+                tile.onload = function(){
                     draw();
-                }  
-            }
-
-            function draw() {
-                for (var row = 0; row < grid.width; row++) {
-                    for (var col = 0; col < grid.height; col++) {
-                        var tilePositionX = (row - col) * tile.height;
-
-                        // center the grid horizontally
-                        tilePositionX += (canvas.width / 2) - (tile.height / 2);
-
-                        var tilePositionY = (row + col) * (tile.width / 2);
-
-                        if (tileMap[row] != null && tileMap[row][col] != null) {
-                            c.drawImage(dirt, Math.round(tilePositionX), Math.round(tilePositionY), dirt.width, dirt.height);
-                        } else {
-                            c.drawImage(dirt, Math.round(tilePositionX), Math.round(tilePositionY), tile.width, tile.height);
-                        }
-                    }
                 }
-            }
-        }
-        
-    </script>
-</head>
-<body>
-    <canvas id="myCanvas" width="600" height="300"></canvas>
-</body>
+
+
+				function handleMouseDown(e) {
+					// These offsets determine where the grid starts on the canvas
+					var gridOffsetY = 0;  // No vertical offset (starts at top)
+					var gridOffsetX = 0;  // Will be calculated to center horizontally
+
+					// CENTER THE GRID HORIZONTALLY:
+					// canvas.width / 2 = center of canvas
+					// tile.width / 2 = half the tile width
+					// Subtracting gives us the X position where the top tile should start
+					gridOffsetX += (canvas.width / 2) - (tile.width / 2);
+
+					// ═══════════════════════════════════════════════════════════════
+					// ISOMETRIC CLICK DETECTION MATH - THE COMPLEX PART!
+					// ═══════════════════════════════════════════════════════════════
+					// 
+					// GOAL: Convert screen coordinates (e.clientX, e.clientY) to grid 
+					// coordinates (row, col)
+					//
+					// ISOMETRIC PROJECTION BASICS:
+					// In isometric view, a square grid is rotated 45° and squashed vertically ?? what does squashed mean
+					// This means:
+					// - Moving right 1 tile = moving diagonally down-right on screen
+					// - Moving down 1 tile = moving diagonally down-left on screen
+					// - X and Y screen positions are mixed together in the grid coordinates
+					//
+					// VISUAL REPRESENTATION:
+					//
+					//     col=0,row=0
+					//         / \
+					//        /   \
+					//   c=0 /     \ c=1
+					//   r=1 \     / r=0
+					//        \   /
+					//         \ /
+					//     col=1,row=1
+					//
+					// Notice how both row AND col affect BOTH X and Y screen positions!
+					//
+					// THE FORMULAS:
+					// To go from screen (X,Y) to grid (row,col), we need to "undo" the 
+					// isometric transformation. This requires solving two equations:
+					//
+					// screenX = (row - col) * tileWidth/2  + offsetX
+					// screenY = (row + col) * tileHeight/2 + offsetY
+					//
+					// Solving these simultaneously gives us:
+					// col = (screenY/tileHeight - screenX/tileWidth + offsetX/tileWidth) / 2
+					// row = (screenY/tileHeight + screenX/tileWidth - offsetX/tileWidth) / 2
+					//
+					// ═══════════════════════════════════════════════════════════════
+
+					// STEP 1: Calculate COL (column)
+					// Start with Y coordinate doubled (this is part of the inverse transformation)
+					var col = (e.clientY - gridOffsetY) * 2;
+					
+					// Now apply the full formula for column:
+					// We add the X offset, add the modified Y, subtract the click X position
+					// Then divide by 2 to complete the inverse transformation
+					// This effectively asks: "how far diagonally down-left from origin?"
+					col = ((gridOffsetX + col) - e.clientX) / 2;
+					
+					// STEP 2: Calculate ROW
+					// We add the click X position to the column we just found
+					// Subtract tile.height (a correction factor for the specific tile dimensions)
+					// Subtract the grid offset to account for centering
+					// This effectively asks: "how far diagonally down-right from origin?"
+					var row = ((e.clientX + col) - tile.height) - gridOffsetX;
+
+					// STEP 3: Convert from pixel distances to grid indices
+					// Divide by tile.height to get how many tiles away we are
+					// Round to nearest integer since we want discrete grid positions (0, 1, 2, etc.)
+					row = Math.round(row / tile.height);
+					col = Math.round(col / tile.height);
+
+					// STEP 4: Boundary checking
+					// Make sure the click was inside our 10x10 grid
+					// row >= 0 and col >= 0: not negative (off top-left)
+					// row <= grid.width and col <= grid.height: not too large (off bottom-right)
+					if (row >= 0 && 
+						col >= 0 && 
+						row <= grid.width &&
+						col <= grid.height) {
+
+						// Initialize the row array if it doesn't exist yet
+						// This is a ternary operator: condition ? valueIfTrue : valueIfFalse
+						// If tileMap[row] is undefined, create empty array [], otherwise keep existing
+						tileMap[row] = (tileMap[row] === undefined) ? [] : tileMap[row];
+							
+						// Mark this tile as filled by setting it to 1
+						tileMap[row][col] = 1;
+						
+						// Redraw the entire grid to show the change
+						draw();
+					}
+				}
+
+				
+				function draw() {
+					// Clear the entire canvas before redrawing
+					// This prevents old tiles from showing through
+					c.clearRect (0, 0, canvas.width, canvas.height);
+
+					// ═══════════════════════════════════════════════════════════════
+					// ISOMETRIC RENDERING MATH - DRAWING THE DIAMOND GRID
+					// ═══════════════════════════════════════════════════════════════
+					//
+					// GOAL: Convert grid coordinates (row, col) to screen coordinates (X, Y)
+					//
+					// ISOMETRIC TRANSFORMATION:
+					// To create the diamond pattern, we use these formulas:
+					// screenX = (row - col) * tileWidth/2
+					// screenY = (row + col) * tileHeight/2
+					//
+					// WHY THIS WORKS:
+					//
+					// Consider a 3x3 grid and how each position maps:
+					//
+					// Grid:          row  col   (row-col)  (row+col)   Screen position
+					// [0,0]           0    0        0          0       (0, 0) - top
+					// [0,1]           0    1       -1          1       (-W/2, H/2) - left
+					// [1,0]           1    0        1          1       (W/2, H/2) - right
+					// [1,1]           1    1        0          2       (0, H) - below top
+					//
+					// The (row - col) creates the LEFT-RIGHT movement
+					// - Increasing row moves right, increasing col moves left
+					// - This creates the horizontal spread of the diamond
+					//
+					// The (row + col) creates the UP-DOWN movement
+					// - Increasing either row OR col moves downward
+					// - This creates the vertical stacking
+					//
+					// Multiplying by tile.height creates proper spacing between tiles
+					// Using tile.height/2 for Y creates the "squashed" look of isometric view
+					//
+					// VISUAL:
+					//      [0,0]
+					//      /  \
+					//  [0,1]  [1,0]
+					//      \  /
+					//      [1,1]
+					//
+					// ═══════════════════════════════════════════════════════════════
+
+					// Loop through every tile in our grid
+					for (var row = 0; row < grid.width; row++) {
+						for (var col = 0; col < grid.height; col++) {
+
+							// CALCULATE X POSITION (horizontal)
+							// (row - col) creates the diamond shape horizontally
+							// When row > col, tile moves RIGHT
+							// When col > row, tile moves LEFT
+							// Multiply by tile.height for proper spacing
+							var tilePositionX = (row - col) * tile.height;
+
+							// Add horizontal centering offset
+							// This shifts the entire grid to the center of the canvas
+							tilePositionX += (canvas.width / 2) - (tile.width / 2);
+
+							// CALCULATE Y POSITION (vertical)
+							// (row + col) makes tiles further from origin appear lower
+							// Both increasing row OR col pushes the tile downward
+							// Multiply by half tile height because isometric tiles overlap
+							// (each tile advances only half its height vertically)
+							var tilePositionY = (row + col) * (tile.height / 2);
+
+							// Check if this tile has been clicked (filled)
+							// First check if tileMap[row] exists, then check if [col] exists
+							if (tileMap[row] != null && tileMap[row][col] != null) {
+								// Draw the brown filled tile
+								// Math.round ensures crisp pixel alignment (no blurry half-pixels)
+								c.drawImage(dirt, Math.round(tilePositionX), Math.round(tilePositionY), dirt.width, dirt.height);
+							} else {
+								// Draw the green empty tile
+								c.drawImage(tile, Math.round(tilePositionX), Math.round(tilePositionY), tile.width, tile.height);	
+							}
+						}	
+					}
+				}
+			}
+		</script>
+    </head>
+    <body>
+		<!--Doesn't need to be exact-->
+		<canvas id="myCanvas" width="558" height="565"></canvas>
+    </body>
 </html>

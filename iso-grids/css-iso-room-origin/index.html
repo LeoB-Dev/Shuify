@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .box {
+            --origin-x: 50%; /* Custom X-origin (adjust me!) */
+            --origin-y: 0; /* Custom Y-origin (adjust me!) */
+            
+            width: 100px;
+            height: 100px;
+            background: #4285F4;
+            transform-origin: var(--origin-x) var(--origin-y); /* Use variables for origin */
+            position: relative;
+        }
+            
+        .box::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #EA4335;
+            border-radius: 50%;
+            top: var(--origin-y); /* Sync with Y variable */
+            left: var(--origin-x); /* Sync with X variable */
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="box"></div>
+</body>
+</html>
