@@ -105,11 +105,14 @@
 
     #main-header-2 {
         margin-top: 20px;
+        font-size: 32px;
+        font-weight: 400;
     }
 
     #description-2 {
         margin-top: 10px;
-        width: 60%;
+        font-size: 19px;
+        width: 768px;
     }
 
     .word-box, #isometric-room {
@@ -126,7 +129,7 @@
 
     .middle-scrollable-section {
         margin-top: 70px;
-        width: 60%;
+        width: 1000px;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
@@ -142,11 +145,33 @@
 
     .word-box {
         text-align: center;
-        font-size: x-large;
+        font-size: 19px;
     }
 
     #empty-div {
         height: 500px;
+    }
+
+    @media screen and (max-width: 1050px) {
+        .middle-scrollable-section {
+            width: 90%;
+        }
+
+        .word-box {
+            width: 90%;
+            font-size: 2vw;
+        }
+
+        #isometric-room {
+            width: 95%;
+            height: auto;
+        }
+    }
+
+    @media screen and (max-width: 820px) {
+        #description-2 {
+            width: 80%;
+        }
     }
 
     @media screen and (max-width: 800px) {
