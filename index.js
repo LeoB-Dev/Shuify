@@ -1,3 +1,3 @@
-$.get("iso-room-dnd/index.html", function(data){
+$.get("navbar.html", function(data){
     $("#nav").replaceWith(data);
 });
