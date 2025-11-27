@@ -34,7 +34,7 @@
         color: black;
     }
 
-    #shuify-name, .nav-bar, #description-1, #description-2, #main-header-1, #main-header-2 {
+    #shuify-name, .nav-bar, #description-1, #description-2, #main-header-2 {
         font-weight: 200;
     }
 
@@ -69,18 +69,20 @@
 
     #main-header-1 {
         margin-top: 80px;
-        font-size: 300%;
-        width: 60%;
+        font-size: 55px;
+        width: 70%;
+        font-weight: 400;
         /* min-width: 200px; text does not wrap */
     }
 
     #description-1 {
-        margin-top: 0;
-        font-size: 2vw;
-        width: 60%;
+        margin-top: 20px;
+        font-size: 20px;
+        width: 500px;
     }
 
     #middle-link {
+        margin-top: 36px;
         width: 150px;
         background-color: #8ECAE6;
         border: none;
@@ -101,7 +103,12 @@
         margin-top: 15px;
     }
 
+    #main-header-2 {
+        margin-top: 20px;
+    }
+
     #description-2 {
+        margin-top: 10px;
         width: 60%;
     }
 
@@ -123,6 +130,7 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
+        /* size of image or containers is larger than the 60% width */
     }
 
     .left-non-sticky {
@@ -139,6 +147,19 @@
 
     #empty-div {
         height: 500px;
+    }
+
+    @media screen and (max-width: 800px) {
+        #main-header-1 {
+            font-size: 35px;
+            margin-top: 40px;
+        }
+    }
+
+    @media screen and (max-width: 641px) {
+        #description-1 {
+            width: 80%;
+        }
     }
 
 </style>
@@ -161,7 +182,7 @@
         <a href="sign-in.html" class="hyperlink" id="middle-link">Get started for free</a>
         <img id="isometric-city" src="isometric-city.jpg" alt="iso city"><br></br>
         <h2 id="main-header-2">How it works</h2>
-        <p id="description-2">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Fuga dolorem delectus, esse doloribus eveniet omnis veritatis. Excepturi commodi mollitia expedita officia, deserunt accusantium eveniet quisquam. Sint, iste optio quis assumenda reprehenderit sed expedita corporis unde illo autem nisi voluptatum maiores, eum sapiente quod. Accusamus sed, fugit dolore nesciunt ad sint.
+        <p id="description-2">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Fuga dolorem delectus, esse doloribus eveniet omnis veritatis. Excepturi commodi mollitia expedita officia, deserunt accusantium eveniet quisquam. Sint, iste optio quis assumenda.
         </p>
 
         <div class="middle-scrollable-section">
