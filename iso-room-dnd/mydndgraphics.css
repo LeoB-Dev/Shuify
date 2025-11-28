@@ -1,0 +1,147 @@
+body {
+    height: 100dvh;
+    overflow: hidden;
+    margin: 0;
+    align-items: center;
+    padding: 0;
+    background-color: #f2f2f2;
+}
+
+#overall-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#main-content {
+    display: flex;
+    flex: 1;
+    width: 100%;
+}
+
+#player-sidebar {
+    width: 25%;
+    background-color: lightgray;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 166px;
+}
+
+#input-container {
+    width: 85%;
+    height: 20px;
+    margin-bottom: 10px;
+}
+
+#search-bar {
+    border-radius: 5px;
+    margin-top: 10px;
+    width: 100%;
+    height: 20px;
+    border: 1px solid white;
+    box-sizing: border-box;
+}
+
+.scroll-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.furn-container {
+    background-color: white;
+    width: 85%;
+    aspect-ratio: 553/431;
+    border-radius: 6px;
+    position: relative;
+    margin-top: 10px;
+}
+
+
+#iso-bed {
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+}
+
+#central-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.room-container {
+    height: 75%;
+    aspect-ratio: 1 / 1;
+    position: relative;
+}
+
+.room-left{
+    height: 50%;
+    width: 50%;
+    background-color: #d3d3d3;
+    position: absolute;
+    bottom: 50%;
+    transform: rotate(90deg) skewX(-30deg) scaleY(0.864);
+    transform-origin: bottom right;
+}
+
+.room-right{
+    height: 50%;
+    width: 50%;
+    background-color: #bebebe;
+    position: absolute;
+    bottom: 50%;
+    transform: rotate(-30deg) skewX(-30deg) scaleY(0.864);
+    transform-origin: bottom right;
+}
+
+
+.room-top{
+    /* Copy and use this as the small one*/
+    height: 50%;
+    width: 50%;
+    position: absolute;
+    background-color: #54513f;
+    transform-origin: 0 0;
+    bottom: 50%;
+    transform: rotate(210deg) skew(-30deg) scaleY(0.864);
+    transform-origin: bottom right;
+}
+
+@media(max-width: 800px){
+    #main-content {
+        flex-direction: column-reverse;
+    }
+
+    #player-sidebar {
+        flex-direction: row;
+        height: 20%;
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #search-bar {
+        width: 120px;
+        height: 9%;
+        align-self: flex-start;
+        margin-left: 1%;
+    }
+
+    .category-button {
+        width: 25%;
+        height: 80%;
+        margin-left: 1%;
+    }
+
+    .furn-container {
+        height: 80%;
+        width: 25%;
+        margin-left: 1%;
+    }
+} 

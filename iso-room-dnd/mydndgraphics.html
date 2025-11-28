@@ -7,162 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="mydndgraphics.css">
     <script src="//code.jquery.com/jquery.min.js"></script>
     <script src="mydndgraphics.js" defer></script>
-
-    <style>
-        body {
-            height: 100dvh;
-            overflow: hidden;
-            margin: 0;
-            align-items: center;
-            padding: 0;
-            background-color: #f2f2f2;
-        }
-
-        #overall-content {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        #main-content {
-            display: flex;
-            flex: 1;
-            width: 100%;
-        }
-
-        #player-sidebar {
-            width: 25%;
-            background-color: lightgray;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            min-width: 166px;
-        }
-
-        #input-container {
-            width: 85%;
-            height: 20px;
-            margin-bottom: 10px;
-        }
-
-        #search-bar {
-            border-radius: 5px;
-            margin-top: 5%;
-            width: 100%;
-            height: 20px;
-            border: 1px solid white;
-            box-sizing: border-box;
-        }
-
-        .furn-container {
-            background-color: white;
-            width: 85%;
-            aspect-ratio: 553/431;
-            border-radius: 6px;
-            position: relative;
-            margin-top: 10px;
-        }
-
-        #iso-bed {
-            width: 100%;
-            height: auto;
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
-        }
-
-        .category-button {
-            width: 85%;
-            height: 15%;
-            background-color: white;
-            border: none;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        #central-content {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 1;
-        }
-
-        .container {
-            height: 75%;
-            aspect-ratio: 1 / 1;
-            position: relative;
-        }
-
-        .left{
-            height: 50%;
-            width: 50%;
-            background-color: #d3d3d3;
-            position: absolute;
-            bottom: 50%;
-            transform: rotate(90deg) skewX(-30deg) scaleY(0.864);
-            transform-origin: bottom right;
-        }
-
-        .right{
-            height: 50%;
-            width: 50%;
-            background-color: #bebebe;
-            position: absolute;
-            bottom: 50%;
-            transform: rotate(-30deg) skewX(-30deg) scaleY(0.864);
-            transform-origin: bottom right;
-        }
-
-
-        .top{
-            /* Copy and use this as the small one*/
-            height: 50%;
-            width: 50%;
-            position: absolute;
-            background-color: #54513f;
-            transform-origin: 0 0;
-            bottom: 50%;
-            transform: rotate(210deg) skew(-30deg) scaleY(0.864);
-            transform-origin: bottom right;
-        }
-
-        @media(max-width: 800px){
-            #main-content {
-                flex-direction: column-reverse;
-            }
-
-            #player-sidebar {
-                flex-direction: row;
-                height: 20%;
-                width: 100%;
-                justify-content: flex-start;
-            }
-
-            #search-bar {
-                width: 120px;
-                height: 9%;
-                align-self: flex-start;
-                margin-left: 1%;
-            }
-
-            .category-button {
-                width: 25%;
-                height: 80%;
-                margin-left: 1%;
-            }
-
-            .furn-container {
-                height: 80%;
-                width: 25%;
-                margin-left: 1%;
-            }
-        } 
-        
-
-    </style>
 </head>
 <body>
     <div id="overall-content">
@@ -172,17 +19,21 @@
                 <div id="input-container">
                     <input id="search-bar" name="search-bar" type="text" minlength="1" maxlength="50" autocomplete="given-name"><br><br>
                 </div>
-                <button class="category-button" id="beds">Beds</button>
-                <div class="furn-container">
-                    <img class="furniture" id="iso-bed" draggable="true" src="iso-bed-nobg.png" alt="bed">
+                <div class="scroll-menu">
+                    <div class="furn-container">
+                        <img class="furniture" id="iso-bed" draggable="true" src="iso-bed-nobg.png" alt="bed">
+                    </div>
+                    <div class="furn-container"></div>
                 </div>
+                
+            
             </div>
 
             <div id="central-content">
-                <div class="container">
-                    <div class="left"></div>
-                    <div class="right"></div>
-                    <div class="top"></div>
+                <div class="room-container">
+                    <div class="room-left"></div>
+                    <div class="room-right"></div>
+                    <div class="room-top"></div>
                 </div>
             </div>
         </div>
