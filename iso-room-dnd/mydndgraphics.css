@@ -60,7 +60,7 @@ body {
     height: auto;
     cursor: pointer;
     position: relative;
-    z-index: 2;
+    z-index: 99;
 }
 
 #central-content {
@@ -115,28 +115,33 @@ body {
     }
 
     #player-sidebar {
-        flex-direction: row;
-        height: 20%;
+        height: 25%;
         width: 100%;
-        justify-content: flex-start;
+        overflow-x: auto;
+    }
+
+    #input-container {
+        width: 120px;
+        align-self: start;
+        margin-left: 10px;
+    }
+
+    .scroll-menu {
+        flex-direction: row;
+        height: 37.5%;
+        align-items: center;
     }
 
     #search-bar {
         width: 120px;
-        height: 9%;
-        align-self: flex-start;
-        margin-left: 1%;
-    }
-
-    .category-button {
-        width: 25%;
-        height: 80%;
+        height: 20px;
         margin-left: 1%;
     }
 
     .furn-container {
-        height: 80%;
+        height: 100%;
         width: 25%;
         margin-left: 1%;
+        position: static;
     }
 } 
