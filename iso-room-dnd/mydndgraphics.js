@@ -6,52 +6,68 @@ $.get("../navbar.html", function(data){
 // CodePen drag and drop version (need to change room elements to id's not classes), thus I am temporarily only selecting this class https://codepen.io/BitsPls/pen/XWvwVpE
 const dropZones = document.getElementsByClassName("dropzone");
 
+function roomLeftDropNScale (e){
+    e.classList.add('dropped');
+    e.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(30deg);");
+    e.style.left = "35%";
+    e.style.top = "10%";
+}
+
+function roomRightDropNScale (e){
+    e.classList.add('dropped');
+    e.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(-90deg);");
+    e.style.left = "35%";
+    e.style.top = "10%";   
+}
+
+function roomBottomDropNScale (e){
+    e.classList.add('dropped');
+    e.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(-210deg);");  // 1 / 0.864, you need to divide by 0.864 which is the same as multipling by 1 / 0.864
+    e.style.left = "20%";
+    e.style.top = "20%";
+}
+
+
 for (const zone of dropZones) {
     zone.addEventListener("dragover", (e) => {
         e.preventDefault(); // Parentheses invoke function - browsers default to not allowing elements to be drop targets
         zone.classList.add("drag-over");
-        console.log('dragged over');
     });
 
     zone.addEventListener("dragleave", () => {
         zone.classList.remove("drag-over");
-        console.log('drag left');
     });
 
     zone.addEventListener("drop", (e) => {
         e.preventDefault();
         zone.classList.remove("drag-over");
-        console.log('dropped');
 
         const draggedElement = document.querySelector(".dragging");
         if (draggedElement) {
             zone.appendChild(draggedElement);
 
             if (zone.id === "room-bottom") {
-                console.log('child element appended to bottom dropzone');
-                draggedElement.classList.add('dropped');
-                draggedElement.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(-210deg);");  // 1 / 0.864, you need to divide by 0.864 which is the same as multipling by 1 / 0.864
-                draggedElement.style.left = "20%";
-                draggedElement.style.top = "20%";
-            }
+                roomBottomDropNScale(draggedElement);
+            } 
             else if (zone.id === "room-left") {
-                console.log('child element appended to left dropzone');
-                draggedElement.classList.add('dropped');
-                draggedElement.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(30deg);");
-                draggedElement.style.left = "35%";
-                draggedElement.style.top = "10%";
+                if (draggedElement.id === "iso-window") {
+                    draggedElement.setAttribute("src", "iso-window.png");
+                    roomLeftDropNScale(draggedElement);
+                } else {
+                    roomLeftDropNScale(draggedElement);
+                }
 
             } 
             else if (zone.id === "room-right") {
-                console.log('child element appended to right dropzone');
-                draggedElement.classList.add('dropped');
-                draggedElement.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(-90deg);");
-
+                if (draggedElement.id === "iso-window") {
+                    draggedElement.setAttribute("src", "iso-window-rev.png");
+                    roomRightDropNScale(draggedElement);
+                } else {
+                    draggedElement.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(-90deg);");
+                }
             }
-            
             else if (zone.classList.contains("furn-container") && zone.classList.contains("dropzone")) {
-                console.log('classList.contains is functioning');
-                // draggedElement.classList.add('dropped');
+                draggedElement.classList.add('dropped');
                 draggedElement.setAttribute("style", "transform: none;");
             }
         }
@@ -61,14 +77,12 @@ for (const zone of dropZones) {
 document.body.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("furniture")) {
         e.target.classList.add("dragging");
-        console.log("dragging started");
     }
 });
 
 document.body.addEventListener("dragend", (e) => {
     if (e.target.classList.contains("furniture")) {
         e.target.classList.remove("dragging");
-        console.log("dragging stopped");
     }
 });
 
