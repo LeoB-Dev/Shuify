@@ -32,41 +32,52 @@ for (const zone of dropZones) {
     zone.addEventListener("dragover", (e) => {
         e.preventDefault(); // Parentheses invoke function - browsers default to not allowing elements to be drop targets
         zone.classList.add("drag-over");
+        console.log('started drag-over');
     });
 
     zone.addEventListener("dragleave", () => {
         zone.classList.remove("drag-over");
+        console.log('removed drag-over');
     });
 
     zone.addEventListener("drop", (e) => {
         e.preventDefault();
         zone.classList.remove("drag-over");
+        console.log('removed drag-over');
 
         const draggedElement = document.querySelector(".dragging");
         if (draggedElement) {
             zone.appendChild(draggedElement);
 
             if (zone.id === "room-bottom") {
+                console.log('child element appended to bottom dropzone');
                 roomBottomDropNScale(draggedElement);
-            } 
+            }
+
             else if (zone.id === "room-left") {
                 if (draggedElement.id === "iso-window") {
+                    console.log('child element appended to left dropzone');
                     draggedElement.setAttribute("src", "iso-window.png");
                     roomLeftDropNScale(draggedElement);
                 } else {
+                    console.log('child element appended to left dropzone');
                     roomLeftDropNScale(draggedElement);
                 }
+            }
 
-            } 
             else if (zone.id === "room-right") {
                 if (draggedElement.id === "iso-window") {
+                    console.log('child element appended to right dropzone');
                     draggedElement.setAttribute("src", "iso-window-rev.png");
                     roomRightDropNScale(draggedElement);
-                } else {
-                    draggedElement.setAttribute("style", "transform: scaleY(1.157) skew(30deg) rotate(-90deg);");
+                } else if (draggedElement.classList.contains("leftright-deny")){
+                    console.log('leftright-deny initiated');
+                    // zone.classList.remove("dragging");
                 }
             }
+
             else if (zone.classList.contains("furn-container") && zone.classList.contains("dropzone")) {
+                console.log('child element appended to furn-container');
                 draggedElement.classList.add('dropped');
                 draggedElement.setAttribute("style", "transform: none;");
             }
@@ -77,12 +88,14 @@ for (const zone of dropZones) {
 document.body.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("furniture")) {
         e.target.classList.add("dragging");
+        console.log("dragging started");
     }
 });
 
 document.body.addEventListener("dragend", (e) => {
     if (e.target.classList.contains("furniture")) {
         e.target.classList.remove("dragging");
+        console.log("dragging ended");
     }
 });
 
