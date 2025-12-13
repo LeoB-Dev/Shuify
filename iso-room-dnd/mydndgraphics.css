@@ -79,6 +79,10 @@ body {
     z-index: 999;
 }
 
+#iso-art.furniture.dropped {
+    width: 40%;
+}
+
 #iso-window {
     width: 30%;
     z-index: 998;
@@ -135,28 +139,22 @@ body {
     }
 
     #player-sidebar {
-        height: 30%;
+        height: 35%;
         width: 100%;
+        box-sizing: border-box; /* ADD THIS */
+        padding-bottom: 15px; /* ADD THIS - creates bottom space */
     }
 
     #input-container {
         width: 120px;
         align-self: start;
         margin-left: 5px;
-        height: 20px; /*removable*/
-        margin-bottom: 10px; /*removable*/
+        margin-bottom: 5px; /*removable*/
     }
 
     #search-bar {
         width: 120px;
         height: 20px;
-        margin-left: 1%; /*removable*/
-        border-radius: 5px; /*removable*/
-        margin-top: 10px; /*removable*/
-        margin-bottom: 10px; /*removable*/
-        width: 100%; /*removable*/
-        height: 20px; /*removable*/
-        box-sizing: border-box; /*removable*/
     }
 
     .furn-container {
@@ -177,10 +175,11 @@ body {
 
     .scroll-menu {
         flex-direction: row;
-        height: 50%;
+        height: 70%;
         width: 100%;
         align-items: center;
         overflow-y: visible;
         overflow-x: scroll;
+        padding-bottom: 10px;
     }
 } 
