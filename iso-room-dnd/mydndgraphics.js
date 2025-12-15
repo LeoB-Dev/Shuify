@@ -8,7 +8,7 @@ const dropZones = document.getElementsByClassName("dropzone");
 
 function windowWallPos (e) {
     e.style.left = "35%";
-    e.style.top = "10%";
+    e.style.top = "20%";
 }
 
 function artWallPos (e) {
