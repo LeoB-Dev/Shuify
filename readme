@@ -1,6 +1,7 @@
 # Shuify - Isometric Room Planner
 
-![BoxIt App Demo](room-recording.gif)
+![alt text](<Screenshot 2025-12-15 134442-2.png>)
+![alt text](room-recording.gif)
 
 ## Overview
 A web application that allows users to design and arrange rooms in isometric 3D view with intuitive drag-and-drop functionality.
@@ -23,7 +24,7 @@ A web application that allows users to design and arrange rooms in isometric 3D 
 ```bash
 
 # Clone the repository
-git clone [your-repo-url]
+git clone https://github.com/LeoB-Dev/boxit-shu.git
 
 # Install dependencies
 npm install
