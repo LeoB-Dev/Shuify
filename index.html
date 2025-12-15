@@ -43,8 +43,16 @@
         padding-left: 22px;
     }
 
-    .nav-bar, .right-of-nav-bar, .bottom-bar {
+    .nav-bar, .right-of-nav-bar {
         background-color: #f2f2f2; /* temp */ 
+        display: flex; 
+        justify-content: space-between;
+        align-items: center;
+        height: 10%;
+    }
+
+    .bottom-bar {
+        padding-bottom: 20px;
         display: flex; 
         justify-content: space-between;
         align-items: center;
@@ -121,7 +129,6 @@
 
     #isometric-room {
         height: auto;
-        /* margin-top: 60px; */
         position: sticky;
         right: 70px;  /* Distance from right edge */
         top: 250px;    /* Distance from top edge */
@@ -217,7 +224,7 @@
                 <p class="word-box" id="word-box-3">Lorem ipsum dolor sit amet consectetur adipisicing elit. Minus nesciunt nemo hic? Quas maxime quisquam dolorem laboriosam cum, ad ipsa, ratione illum mollitia labore autem ut minima, repudiandae explicabo nisi earum fuga deleniti!.</p>
             </div>
             <div class="right-sticky">
-                <video id="isometric-room" autoplay loop muted width="300" height="300" src="room-recording.mp4">
+                <video id="isometric-room" autoplay loop muted src="room-recording.mp4">
                     Multiple peices of furniture being dragged into a room and snapping into place
                 </video>
             </div>
@@ -229,13 +236,18 @@
     <div id="empty-div"></div>
 
     <div class="bottom-bar">
-            <h1 id="shuify-name">Shuify</h1>
-            <div class="right-of-nav-bar">
-                <a href="iso-room-dnd\mydndgraphics.html" class="hyperlink">My Rooms</a>
-                <!-- <a href="my-rooms.html" class="hyperlink">Presets</a> -->
-                <!-- <a href="items.html" class="hyperlink">Items</a> -->
-                <a href="sign-in.html" class="hyperlink">Sign In</a>
-            </div>
+        <p>&copy; 2025 Leo Beatson</p>
+
+            <p>
+            <a href="https://github.com/LeoB-Dev/boxit-shu" target="_blank" rel="noopener" style="text-decoration: none; color: #0077b5;">
+                View Source Code
+            </a>
+            
+            <span style="margin: 0 10px;">|</span> 
+            <a href="https://www.linkedin.com/in/leo-beatson-0022bb283/" target="_blank" rel="noopener" style="text-decoration: none; color: #0077b5;">
+                LinkedIn
+            </a>
+        </p>
     </div>
 </body>
 </html>
