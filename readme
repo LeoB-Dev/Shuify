@@ -1,83 +1,34 @@
-Weblink:
-https://boxit-shu.vercel.app/
+# Shuify - Isometric Room Planner
 
-To Do list:
+[Add a GIF or screenshot here showing the drag-and-drop in action]
 
-General:
-- Grab the list of notes from my my-rooms page on my mac
-- https://stackoverflow.com/questions/31954089/how-can-i-reuse-a-navigation-bar-on-multiple-pages 
-- https://www.youtube.com/watch?v=U8smiWQ8Seg&t=311s
+## Overview
+A web application that allows users to design and arrange rooms in isometric 3D view with intuitive drag-and-drop functionality.
 
-- Make the nav bar collapsible with animation
-Why it doesn't work:
+## Features
+- 🎨 Drag-and-drop furniture placement in isometric view
+- 📐 Real-time coordinate transformation for accurate positioning
+- 🔄 Dynamic depth sorting and layering
+- 💾 [Any other key features - saving layouts? Multiple rooms? etc.]
 
-display has no "in-between" state
-You can't be "half block" or "75% none"
-It's binary: on or off
-Browser doesn't know how to animate it
+## Technologies Used
+- **Frontend:** HTML, Vanilla JavaScript, JQuery
+- **Styling:** CSS
+- **Deployment:** Vercel
 
-The workaround:
-css.sidebar {
-  opacity: 0;          /* Invisible but still there */
-  visibility: hidden;  /* Don't capture clicks */
-  transition: opacity 0.5s, visibility 0.5s;
-}
+## Live Demo
+🔗 https://boxit-shu.vercel.app/
 
-.sidebar.open {
-  opacity: 1;
-  visibility: visible;
-}
+## Installation & Running Locally
+```bash
 
-Javascript therefore needs to be amended accordingly as all based on flex diplsay proepty.
+# Clone the repository
+git clone [your-repo-url]
 
-Homepage
-- text over image:https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_image_text 
+# Install dependencies
+npm install
 
-- Resize responsive text: 
-https://stackoverflow.com/questions/15649244/responsive-font-size-in-css
-- https://css-tricks.com/viewport-sized-typography/ 
+# Run development server
+npm run dev
 
-- Add responsive NavBar
-https://www.youtube.com/watch?v=U8smiWQ8Seg
- This is also a good looking website 
-
-https://www.youtube.com/watch?v=8MaCTDkoVd8 - Position sticky (base upon this and todoist page)
-
-- Needs to add another container for all the content apart from the image and the footer, remove css from body and add to this new container
-
-My Squares
-- Art will be created with Rive
-https://stackoverflow.com/questions/34144191/how-to-create-a-isometric-drag-drop-grid-with-javascript
-
-
-Presets
-
-
-Items
-
-
-Sign In
-- Validating passwords: https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_password_val 
-
-Form Validation:
-- /* The action attribute defines the location (URL) where the form's collected data should be sent when it is submitted.
-
-The method attribute defines which HTTP method to send the data with (usually get or post). */
-
-Rooms 
-https://codepen.io/DrKain/pen/RaOmGx
-https://codepen.io/TemplateDev/pen/KwKRRJm 
-
-Python server at: http://localhost:8000/boxit-shu/iso-room-dnd/mydndgraphics.html
-
-run python server with python -m http.server 8000
-
-Art: 
-window: https://www.vecteezy.com/vector-art/69657269-isometric-window-wooden-closed-window-interior-elements-furniture-elements-isometric
-
-
-
-
-
-
-
+# Credits
