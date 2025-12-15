@@ -1,16 +1,12 @@
 # Shuify - Isometric Room Planner
-
-![alt text](<Screenshot 2025-12-15 134442-2.png>)
-![alt text](room-recording.gif)
-
 ## Overview
-A web application that allows users to design and arrange rooms in isometric 3D view with intuitive drag-and-drop functionality.
+A web application that allows users to design and arrange rooms in isometric 3D view with  drag-and-drop functionality.
 
 ## Features
-- 🎨 Drag-and-drop furniture placement in isometric view
-- 📐 Real-time coordinate transformation for accurate positioning
-- 🔄 Dynamic depth sorting and layering
-- 💾 [Any other key features - saving layouts? Multiple rooms? etc.]
+- 🏠 Drag-and-drop furniture placement in isometric view (this funcitonality is on https://boxit-shu.vercel.app/iso-room-dnd/mydndgraphics.html)
+- 🎨 Responsive Design
+- 📐 Snap-into-position system
+- 🖱️ Intuitive controls and user-friendly interface
 
 ## Technologies Used
 - **Frontend:** HTML, Vanilla JavaScript, JQuery
@@ -25,11 +21,5 @@ A web application that allows users to design and arrange rooms in isometric 3D 
 
 # Clone the repository
 git clone https://github.com/LeoB-Dev/boxit-shu.git
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
 
 # Credits
