@@ -1,18 +1,19 @@
 # Shuify - Isometric Room Planner
 
 ## Overview
-A web application that allows users to design and arrange rooms in isometric 3D view with drag-and-drop functionality.
+- A web application that allows users to design and arrange rooms in isometric 3D view with drag-and-drop functionality.
+- Ongoing learning project.
 
 ## Features
-- 🏠 Drag-and-drop furniture placement in isometric view
-- 🎨 Responsive Design
-- 📐 Snap-to-position system
-- 🖱️ Intuitive controls and user-friendly interface
+- 🏠 Drag-and-drop furniture placement in isometric view.
+- 🎨 Responsive Design.
+- 📐 Snap-to-position system.
+- 🖱️ Intuitive controls and user-friendly interface.
 
 ## Technologies Used
-- **Frontend:** HTML, Vanilla JavaScript, jQuery
-- **Styling:** CSS
-- **Deployment:** Vercel
+- **Frontend:** HTML, Vanilla JavaScript, jQuery.
+- **Styling:** CSS.
+- **Deployment:** Vercel.
 
 ## Live Demo
 🔗 [View Live Project](https://boxit-shu.vercel.app/)
@@ -34,4 +35,4 @@ git clone https://github.com/LeoB-Dev/boxit-shu.git
 ### Icons & Assets
 All furniture and decorative items created by [Ylivdesign - Flaticon](https://www.flaticon.com/authors/ylivdesign), except:
 - Desk: [Nsit - Flaticon](https://www.flaticon.com/authors/nsit)
-- Bed: Created by me using Adobe Illustrator
+- Bed: Created by me using Adobe Illustrator.
