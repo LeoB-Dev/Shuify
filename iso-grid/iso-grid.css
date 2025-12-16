@@ -23,6 +23,32 @@ body {
     border-width: 0.25px;
 }
 
+
 .cell:hover {
   background-color: lightblue;
+}
+
+#player {
+    background-color: red;
+    width: 60px;
+    height: 60px;
+    border-style: solid;
+    border-color: black;
+    border-width: 0.25px;
+    transform: rotate(210deg) skew(-30deg) scaleY(0.864);
+    --origin-x: bottom; 
+    --origin-y: right; 
+    transform-origin: var(--origin-x) var(--origin-y);
+}
+
+#bottom-point {
+    content: '';
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    background:blue;
+    border-radius: 50%;
+    top: var(--origin-y); /* Sync with Y variable */
+    left: var(--origin-x); /* Sync with X variable */
+    transform: translate(-50%, -50%);
 }

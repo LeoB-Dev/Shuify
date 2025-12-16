@@ -1,0 +1,17 @@
+Here's how to approach both:
+Converting to Percentages
+This is the trickier part. When you convert individual shape dimensions from pixels to percentages, each shape will scale relative to its own container, not relative to the group. This means shapes won't maintain their size relationships to each other unless you're careful.
+The solution: Wrap all shapes in a container with a fixed aspect ratio (using aspect-ratio property or padding-bottom trick). Then convert each shape's:
+
+Width/height to percentages of this container
+Positions (top, left, or transform translate values) to percentages as well
+
+The key insight: percentages need a reference point. By giving them a consistent container, you ensure they all scale proportionally together.
+Alternative approach: Keep the shapes in pixels but make the wrapper container responsive using percentages. The wrapper scales, and since the shapes are positioned relative to it, they scale together naturally. This is often simpler.
+Moving as a Group
+Once wrapped in a container, this becomes straightforward:
+Apply transform: translate() to the parent container only. Set the transform-origin on the parent to control the pivot point for the entire group. All children move together as one unit.
+You can also use position: absolute or relative on the parent and adjust top/left, but transforms are generally smoother for animation and don't trigger layout recalculation.
+Pro tip: If you need to both move AND rotate/scale the group, keep the positioning transform on the parent and any rotation/scaling as a separate transform. CSS allows you to chain transforms: transform: translate(50%, 50%) rotate(45deg) scale(1.2).
+
+Use element.getBoundingClientRect().height to give the height of the top element

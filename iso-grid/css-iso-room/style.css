@@ -1,0 +1,88 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 50%;
+    aspect-ratio: 1 / 1;
+    border: 2px solid black;
+    position: relative;
+}
+
+.left{
+    height: 50%;
+    width: 50%;
+    background-color: #3e8fe1;
+    position: absolute;
+    bottom: 50%;
+    transform: rotate(90deg) skewX(-30deg) scaleY(0.864);
+    --origin-x: bottom; 
+    --origin-y: right; 
+    transform-origin: var(--origin-x) var(--origin-y);
+}
+
+.right{
+    height: 50%;
+    width: 50%;
+    background-color: #2870bd;
+    position: absolute;
+    bottom: 50%;
+    transform: rotate(-30deg) skewX(-30deg) scaleY(0.864);
+    --origin-x: bottom; 
+    --origin-y: right; 
+    transform-origin: var(--origin-x) var(--origin-y);
+}
+
+
+.top{
+    /* Copy and use this as the small one*/
+    height: 50%;
+    width: 50%;
+    position: absolute;
+    background-color: #80bdfe;
+    transform-origin: 0 0;
+    bottom: 50%;
+    transform: rotate(210deg) skew(-30deg) scaleY(0.864);
+    --origin-x: bottom; 
+    --origin-y: right; 
+    transform-origin: var(--origin-x) var(--origin-y);
+}
+
+.left::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: red;
+            border-radius: 50%;
+            top: var(--origin-y); /* Sync with Y variable */
+            left: var(--origin-x); /* Sync with X variable */
+            transform: translate(-50%, -50%);
+        }
+
+.right::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #EA4335;
+            border-radius: 50%;
+            top: var(--origin-y); /* Sync with Y variable */
+            left: var(--origin-x); /* Sync with X variable */
+            transform: translate(-50%, -50%);
+        }
+
+.top::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #EA4335;
+            border-radius: 50%;
+            top: var(--origin-y); /* Sync with Y variable */
+            left: var(--origin-x); /* Sync with X variable */
+            transform: translate(-50%, -50%);
+        }
