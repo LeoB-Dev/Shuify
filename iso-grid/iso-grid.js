@@ -29,3 +29,7 @@ document.body.addEventListener("dragend", (e) => {
         console.log("dragging ended");
     }
 });
+
+
+// Bottom origin point needs to be made into a variable
+// When item is dragged onto a certain cell, the bottom origin point needs to snap onto bottom origin point of the cell
