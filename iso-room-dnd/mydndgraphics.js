@@ -187,6 +187,8 @@ document.body.addEventListener("touchend", (e) => {
     }
 });
 
+// May need to make this whole thing into a function and then reuse it for each side (that that draggble is accepted into)
+
 
 
 function showSidebar(){
