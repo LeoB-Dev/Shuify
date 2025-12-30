@@ -34,6 +34,7 @@
         color: black;
     }
 
+
     #sign-in {
         color: #f2f2f2;
         background-color: #219EBC;
@@ -99,15 +100,18 @@
 
     <ul>
         <li><a href="/index.html" id="shuify-name">Shuify</a></li>
-        <li class="hideOnMobile"><a href="/iso-room-dnd/mydndgraphics.html">Rooms</a>
-            <ul class="room-dropdown">
-                <li class="hideOnMobile"><a href="#"></a>Create a Room</li>
-                <li class="hideOnMobile"><a href="#"></a>My Rooms</li>
+
+        <li class="hideOnMobile dropdown-menu-title"><a href="#">Rooms</a>
+            <ul class="dropdown-menu-items">
+                <li class="hideOnMobile"><a href="#">Create a Room</a></li>
+                <li class="hideOnMobile"><a href="#">My Rooms</a></li>
             </ul>
         </li>
+
         <li class="hideOnMobile"><a href="/sign-in-2/sign-in-2.html" id="sign-in">Sign In</a></li>
         <li onclick="showSidebar()"><a href="#"><svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="28px" fill="#000000"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg></a></li>
     </ul>
+
     <ul class="sidebar">
         <li onclick="hideSidebar()"><a href="#"><svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="28px" fill="#000000"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg></a></li>
         <li><a href="/iso-room-dnd/mydndgraphics.html">Rooms</a></li> <!--Make it so it's not on click but hover and also slides out // This is not working -->
