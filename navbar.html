@@ -35,61 +35,64 @@
     }
 
     #menu {
-        display: inline-block;
-        padding: 0;
+        display: flex;
         text-align: center;
-        /* Why is there a gap? */
+        align-items: center;
+        justify-content: center;
+        width: 140px;
     }
-
     #menu li {
         display: inline-block;
         position: relative;
-        padding: 17px 20px;
         cursor: pointer;
         z-index: 5;
-        width: 100px;
+        width: 140px;
     }
-
+    
+    #menu li a{
+        padding: 17px 20px;
+        display: block;
+    }
+    
     #menu li:first-child {
         border-top-left-radius: 5px;
         border-top-right-radius: 5px;
     }
-
+    
     #menu li:last-child {
         border-bottom-left-radius: 5px;
         border-bottom-right-radius: 5px;
     }
-
+    
     .dropdown {
         overflow: hidden;
         list-style: none;
         position: absolute;
         padding: 0;
         width: 100%;
-        left: 0;
-        top: 48px;
     }
-
+    
     .dropdown div {
         transform: translate(0, -100%);
         transition: all 0.5s 0.1s;
         position: relative;
+        padding-top: 17px;
     }
-
+    
     .dropdown li {
         display: block;
         padding: 0;
         width: 100%;
         background: #d3d3d3;
     }
-
+    
     .dropdown div li:hover {
         background: #ccc;
-
     }
-
+    
     #menu li:nth-child(1):hover ul div{
         transform: translate(0, 0);
+        /* won't work on mobile */
     }
 
     #sign-in {
@@ -159,7 +162,7 @@
         <li><a href="/index.html" id="shuify-name">Shuify</a></li>
 
         <ul class="hideOnMobile" id="menu">
-            <li>Rooms
+            <li id="rooms-menu">Rooms
                 <ul class="dropdown">
                     <div>
                         <li id="create-room"><a href="/iso-room-dnd/mydndgraphics.html">Create a Room</a></li>
