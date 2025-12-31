@@ -28,38 +28,68 @@
         margin-right: auto;
     }
 
-
     nav a{
         padding: 2px 4px;
         text-decoration: none;
         color: black;
     }
 
-    .dropdown-menu-title {
-        position: relative;
-        justify-self: center;
+    #menu {
+        display: inline-block;
+        padding: 0;
+        text-align: center;
+        /* Why is there a gap? */
     }
 
-    .dropdown-menu-items {
-        display: flex;
-        flex-direction: column;
-        background: #ddd;
-        height: 0;
-        left: 0;
-        opacity: 0;
+    #menu li {
+        display: inline-block;
         position: relative;
-        transition: all .5s ease;
+        padding: 17px 20px;
+        cursor: pointer;
+        z-index: 5;
+        width: 100px;
+    }
+
+    #menu li:first-child {
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+    }
+
+    #menu li:last-child {
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+
+    .dropdown {
+        overflow: hidden;
+        list-style: none;
         position: absolute;
-        align-items: center;
+        padding: 0;
+        width: 100%;
+        left: 0;
+        top: 48px;
     }
 
-    .dropdown-menu-title:hover .dropdown-menu-items {
-        height: 70px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 1;
-        transform: translateY(0);
+    .dropdown div {
+        transform: translate(0, -100%);
+        transition: all 0.5s 0.1s;
+        position: relative;
+    }
+
+    .dropdown li {
+        display: block;
+        padding: 0;
+        width: 100%;
+        background: #d3d3d3;
+    }
+
+    .dropdown div li:hover {
+        background: #ccc;
+
+    }
+
+    #menu li:nth-child(1):hover ul div{
+        transform: translate(0, 0);
     }
 
     #sign-in {
@@ -128,12 +158,16 @@
     <ul>
         <li><a href="/index.html" id="shuify-name">Shuify</a></li>
 
-        <li class="hideOnMobile dropdown-menu-title"><a href="#">Rooms</a>
-            <ul class="dropdown-menu-items">
-                <li class="hideOnMobile" id="create-room"><a href="#">Create a Room</a></li>
-                <li class="hideOnMobile" id="my-rooms"><a href="#">My Rooms</a></li>
-            </ul>
-        </li>
+        <ul class="hideOnMobile" id="menu">
+            <li>Rooms
+                <ul class="dropdown">
+                    <div>
+                        <li id="create-room"><a href="#">Create a Room</a></li>
+                        <li id="my-rooms"><a href="#">My Rooms</a></li>
+                    </div>
+                </ul>
+            </li>
+        </ul>
 
         <li class="hideOnMobile"><a href="/sign-in-2/sign-in-2.html" id="sign-in">Sign In</a></li>
         <li onclick="showSidebar()"><a href="#"><svg xmlns="http://www.w3.org/2000/svg" height="28px" viewBox="0 -960 960 960" width="28px" fill="#000000"><path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg></a></li>
