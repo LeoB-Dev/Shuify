@@ -30,12 +30,22 @@ body {
 }
 
 #search-bar {
+    background-image: url("search-icon.svg");
+    background-repeat: no-repeat;
+    background-size: 20px;
+    background-position: 4px center;
     border-radius: 5px;
     width: 100%;
     height: 20px;
+    padding: 12px 20px 12px 31px;
     border: 1px solid #f2f2f2;
     background-color: #f2f2f2;
     box-sizing: border-box;
+}
+
+#search-icon {
+    height: 100%;
+    width: auto;
 }
 
 .scroll-menu {
@@ -203,3 +213,5 @@ body {
         padding-bottom: 10px;
     }
 } 
+
+/* input styling creds: https://stackoverflow.com/questions/63179896/displaying-an-image-in-search-bar-html*/

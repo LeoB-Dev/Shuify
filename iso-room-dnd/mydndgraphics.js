@@ -161,14 +161,13 @@ let draggedElement = null; // declare var in outer scope
 
 document.body.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("furniture")) {
-        draggedElement = e.target; // update var (e.target can be used for zone and draggedElement)
+        draggedElement = e.target; // update var (e.target can be used for both zone and draggedElement)
         e.target.classList.add("dragging");
         console.log("dragging started");
     }
 });
 
 for (const zone of dropZones) {
-     
     zone.addEventListener("dragover", (e) => {
         if (draggedElement.classList.contains("bottom-deny") && (zone.id === "room-right" || zone.id === "room-left" || zone.classList.contains("furn-container"))){
             e.preventDefault(); 
