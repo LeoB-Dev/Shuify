@@ -158,8 +158,9 @@ function addIsoStyles(dropZone, droppedElement) {
 
 const dropZones = document.getElementsByClassName("dropzone");
 let draggedElement = null; // declare var in outer scope
+// let isDragging = false;
 
-document.body.addEventListener("pointerdown", (e) => {
+document.body.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("furniture")) {
         draggedElement = e.target; // update var (e.target can be used for both zone and draggedElement)
         e.target.classList.add("dragging");
@@ -177,29 +178,6 @@ for (const zone of dropZones) {
             zone.classList.add("drag-over");
         }
     });
-
-    // add mobile compatibility for touchmovehere
-    // zone.addEventListener("touchmove", (e) => {
-    //     if (draggedElement.classList.contains("bottom-deny") && (zone.id === "room-right" || zone.id === "room-left" || zone.classList.contains("furn-container"))) {
-
-    //         e.preventDefault();
-    //         const touch = e.touches[0];
-    //         const elementUnderFinger = document.elementFromPoint(touch.clientX, touch.clientY);
-    //         if (elementUnderFinger && elementUnderFinger.classList.contains("zone")) {
-    //             elementUnderFinger.classList.add("drag-over");
-    //         }
-
-    //     } else if (draggedElement.classList.contains("leftright-deny") && (zone.id === "room-bottom" || zone.classList.contains("furn-container"))) {
-
-    //         e.preventDefault();
-    //         const touch = e.touches[0];
-    //         const elementUnderFinger = document.elementFromPoint(touch.clientX, touch.clientY);
-    //         if (elementUnderFinger && elementUnderFinger.classList.contains("zone")) {
-    //             elementUnderFinger.classList.add("drag-over");
-    //         }
-
-    //     }
-    // }, { passive: false });
 
     zone.addEventListener("dragleave", () => {
         zone.classList.remove("drag-over");

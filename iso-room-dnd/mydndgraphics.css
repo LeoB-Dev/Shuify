@@ -97,7 +97,9 @@ body {
     position: relative;
     z-index: 999;
     touch-action: none;
+    /* research */
     user-select: none;
+    /* research */
 }
 
 #iso-art.furniture.dropped {
