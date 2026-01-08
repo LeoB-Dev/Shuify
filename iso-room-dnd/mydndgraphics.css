@@ -168,7 +168,7 @@ body {
     }
 
     #player-sidebar {
-        height: 40;
+        height: 40%;
         width: 100%;
         padding-bottom: 15px;
     }
@@ -191,7 +191,7 @@ body {
     }
 
     .furn-container {
-        height: 78%;
+        height: 90%;
         margin-left: 1%;
         display: flex;
         justify-content: center;
