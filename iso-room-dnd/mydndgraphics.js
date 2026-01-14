@@ -179,6 +179,8 @@ for (const zone of dropZones) {
         }
     });
 
+    // Add touch
+
     zone.addEventListener("dragleave", () => {
         zone.classList.remove("drag-over");
         console.log('removed drag-over');

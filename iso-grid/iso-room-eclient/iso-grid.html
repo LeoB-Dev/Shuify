@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iso Grid</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        #dropzone {
+            width: 60vw;
+            aspect-ratio: 1 / 1;
+            background-color: navy;
+            border-radius: 20px;
+            margin: 20px;
+            position: relative;
+        }
+
+        #card {
+            width: 15%;
+            aspect-ratio: 1 / 1;
+            background-color: #AFDA9F;
+            border-radius: 5px;
+            cursor: grab;
+            position: absolute;
+            touch-action: none;
+        }
+
+        #container {
+            background-color: aliceblue;
+            width: 100%;
+            min-height: 200px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #card:active {
+            cursor: grabbing;
+        }
+
+        /* Style for card when being dragged */
+        #card.dragging {
+            position: fixed;
+            z-index: 1000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="dropzone"></div>
+    <div id="container">
+        <div id="card"></div>
+    </div>
+
+    <script>
+        const card = document.getElementById('card');
+        const dropzone = document.getElementById('dropzone');
+        const container = document.getElementById('container');
+
+        let offsetX = 0, offsetY = 0;
+        let originalParent = null;
+        let dragWidth = 0, dragHeight = 0;
+
+        card.addEventListener('mousedown', e => {
+            e.preventDefault();
+
+            const rect = card.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+
+            // Store original parent and dimensions
+            originalParent = card.parentElement;
+            dragWidth = rect.width;
+            dragHeight = rect.height;
+
+            // Switch to fixed positioning with exact current position
+            card.classList.add('dragging');
+            card.style.width = dragWidth + 'px';
+            card.style.height = dragHeight + 'px';
+            card.style.left = rect.left + 'px';
+            card.style.top = rect.top + 'px';
+
+            document.addEventListener('mousemove', mouseMove);
+            document.addEventListener('mouseup', mouseUp);
+        });
+
+        function mouseMove(e) {
+            card.style.left = (e.clientX - offsetX) + 'px';
+            card.style.top = (e.clientY - offsetY) + 'px';
+        }
+
+        function mouseUp(e) {
+            document.removeEventListener('mousemove', mouseMove);
+            document.removeEventListener('mouseup', mouseUp);
+
+            const dropzoneRect = dropzone.getBoundingClientRect();
+            const target = isOver(e.clientX, e.clientY, dropzoneRect) ? dropzone : container;
+
+            dropInto(target);
+        }
+
+        function isOver(x, y, rect) {
+            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        }
+
+        function dropInto(target) {
+            const targetRect = target.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+
+            // Calculate percentage position
+            const percentX = ((cardRect.left - targetRect.left) / targetRect.width) * 100;
+            const percentY = ((cardRect.top - targetRect.top) / targetRect.height) * 100;
+
+            // Remove dragging state
+            card.classList.remove('dragging');
+
+            // Reset to relative positioning
+            card.style.width = '15%';
+            card.style.height = '';
+            card.style.left = percentX + '%';
+            card.style.top = percentY + '%';
+
+            // Move to target if needed
+            if (card.parentElement !== target) {
+                target.appendChild(card);
+            }
+        }
+    </script>
+</body>
+
+</html>

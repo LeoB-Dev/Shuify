@@ -96,10 +96,11 @@ body {
     cursor: pointer;
     position: relative;
     z-index: 999;
-    touch-action: none;
+    /* touch-action: none; */
     /* research */
-    user-select: none;
+    /* user-select: none; */
     /* research */
+    /* filter: brightness(1.5) invert(0.95) opacity(1); */
 }
 
 #iso-art.furniture.dropped {
@@ -138,6 +139,7 @@ body {
     height: 75%;
     aspect-ratio: 1 / 1;
     position: relative;
+    /* filter: brightness(1.5) invert(1) opacity(0.6); */
 }
 
 #room-right {
@@ -158,6 +160,10 @@ body {
     bottom: 50%;
     transform: rotate(-30deg) skewX(-30deg) scaleY(0.864);
     transform-origin: bottom right;
+}
+
+#iso-poster {
+    transform: rotate(-30deg);
 }
 
 

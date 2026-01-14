@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Isometric Drag System</title>
+    <style>
+        body {
+            margin: 0;
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        canvas {
+            background: #020617;
+            border: 2px solid #334155;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <script>
+        // TILE_W/H define the aspect ratio of the diamond. 
+        // A 2:1 ratio (64:32) is the standard for isometric perspective.
+        const TILE_W = 64, TILE_H = 32, GRID = 8
+        const GRID_ORIGIN = { x: 400, y: 120 }
+        const TRAY_ORIGIN = { x: 400, y: 440 }
+
+        let items = [
+            { id: 1, x: 0, y: 0, w: 1, h: 1, c: "#3b82f6", inTray: true },
+            { id: 2, x: 2, y: 0, w: 2, h: 1, c: "#ef4444", inTray: true },
+            { id: 3, x: 4, y: 0, w: 1, h: 2, c: "#10b981", inTray: true }
+        ]
+
+        let drag = null
+        const canvas = document.getElementById("canvas")
+        const ctx = canvas.getContext("2d")
+
+        /**
+         * ISOMETRIC PROJECTION
+         * Converts Grid Coordinates (x, y) to Screen Pixels.
+         * The formula (x - y) creates the horizontal stagger, 
+         * and (x + y) creates the vertical depth.
+         */
+        function isoToScreen(x, y, o) {
+            return {
+                x: (x - y) * (TILE_W / 2) + o.x,
+                y: (x + y) * (TILE_H / 2) + o.y
+            }
+        }
+
+        /**
+         * REVERSE PROJECTION (Inverse Matrix)
+         * Converts Mouse Pixels back into Grid Coordinates.
+         * This is essential to know which "tile" the mouse is hovering over.
+         */
+        function screenToIso(x, y, o) {
+            x -= o.x; y -= o.y;
+            return {
+                x: (x / (TILE_W / 2) + y / (TILE_H / 2)) / 2,
+                y: (y / (TILE_H / 2) - x / (TILE_W / 2)) / 2
+            }
+        }
+
+        // Checks if the projected mouse coordinates fall within the 0 to GRID range
+        function insideGrid(px, py) {
+            const p = screenToIso(px, py, GRID_ORIGIN)
+            return p.x >= 0 && p.y >= 0 && p.x <= GRID && p.y <= GRID
+        }
+
+        /**
+         * SNAPPING LOGIC
+         * Rounds floating point coordinates to the nearest whole integer 
+         * and constrains (clamps) them so items stay inside the grid boundaries.
+         */
+        function snap(p, it) {
+            let x = Math.round(p.x - it.w / 2), y = Math.round(p.y - it.h / 2)
+            return { x: Math.max(0, Math.min(GRID - it.w, x)), y: Math.max(0, Math.min(GRID - it.h, y)) }
+        }
+
+        // Generates the 4 corner points of an isometric diamond shape
+        function poly(x, y, w, h, o) {
+            return [
+                isoToScreen(x, y, o),
+                isoToScreen(x + w, y, o),
+                isoToScreen(x + w, y + h, o),
+                isoToScreen(x, y + h, o)
+            ]
+        }
+
+        // Standard Canvas API rendering with support for dashed lines (setLineDash)
+        function drawPoly(p, f, s, d = []) {
+            ctx.setLineDash(d) // Used for the "ghost" placement preview
+            ctx.beginPath()
+            ctx.moveTo(p[0].x, p[0].y)
+            p.forEach(pt => ctx.lineTo(pt.x, pt.y))
+            ctx.closePath()
+            if (f) { ctx.fillStyle = f; ctx.fill() }
+            if (s) { ctx.strokeStyle = s; ctx.lineWidth = 2; ctx.stroke() }
+            ctx.setLineDash([]) // Reset dash so other elements aren't affected
+        }
+
+        /**
+         * HIT DETECTION
+         * Iterates backwards (top-down) through items to see which one 
+         * contains the mouse cursor based on the transformed coordinate space.
+         */
+        function pick(mx, my) {
+            for (let i = items.length - 1; i >= 0; i--) {
+                const it = items[i], o = it.inTray ? TRAY_ORIGIN : GRID_ORIGIN
+                const p = screenToIso(mx, my, o)
+                if (p.x >= it.x && p.x <= it.x + it.w && p.y >= it.y && p.y <= it.y + it.h) return it
+            }
+            return null
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+            // Draw Background Grids
+            for (let y = 0; y < GRID; y++)for (let x = 0; x < GRID; x++)drawPoly(poly(x, y, 1, 1, GRID_ORIGIN), null, "#334155")
+            for (let i = 0; i < 6; i++)drawPoly(poly(i, 0, 1, 1, TRAY_ORIGIN), null, "#1e40af")
+
+            // Draw Static Items
+            for (const it of items) {
+                if (drag && drag.item.id === it.id) continue // Hide item while it's being dragged
+                const o = it.inTray ? TRAY_ORIGIN : GRID_ORIGIN
+                drawPoly(poly(it.x, it.y, it.w, it.h, o), it.c, "#020617")
+            }
+
+            // Draw Dragging Logic
+            if (drag) {
+                const screen = { x: drag.mx, y: drag.my }
+                const o = drag.item.inTray ? TRAY_ORIGIN : GRID_ORIGIN
+                const iso = screenToIso(screen.x, screen.y, o)
+
+                // 1. The "Floating" item attached to mouse (using AA for partial transparency)
+                drawPoly(poly(iso.x - drag.item.w / 2, iso.y - drag.item.h / 2, drag.item.w, drag.item.h, o),
+                    drag.item.c + "AA", "#000")
+
+                // 2. The Snap Preview (The dashed box on the grid)
+                if (drag.overGrid) {
+                    const p = snap(screenToIso(screen.x, screen.y, GRID_ORIGIN), drag.item)
+                    drawPoly(poly(p.x, p.y, drag.item.w, drag.item.h, GRID_ORIGIN),
+                        drag.item.c + "55", drag.item.c, [6, 6])
+                }
+            }
+        }
+
+        // EVENT HANDLERS
+        // getBoundingClientRect() is crucial to adjust mouse coordinates 
+        // if the canvas isn't at the exact (0,0) of the browser window.
+        canvas.onmousedown = e => {
+            const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top
+            const it = pick(mx, my)
+            if (it) drag = { item: it, mx, my, overGrid: false }
+            draw()
+        }
+        canvas.onmousemove = e => {
+            if (!drag) return
+            const r = canvas.getBoundingClientRect()
+            drag.mx = e.clientX - r.left; drag.my = e.clientY - r.top
+            drag.overGrid = insideGrid(drag.mx, drag.my)
+            draw()
+        }
+        canvas.onmouseup = () => {
+            if (drag && drag.overGrid) {
+                const p = snap(screenToIso(drag.mx, drag.my, GRID_ORIGIN), drag.item)
+                drag.item.x = p.x; drag.item.y = p.y; drag.item.inTray = false
+            }
+            drag = null; draw()
+        }
+        canvas.onmouseleave = () => { drag = null; draw() }
+
+        draw()
+    </script>
+</body>
+
+</html>
