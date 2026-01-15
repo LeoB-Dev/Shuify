@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>No-Framework JavaScript Drag-n-Drop</title>
+
+  <style>
+    /*
+      Pickzones and dropzones are just layout containers.
+      data-pickzone is not used by the logic — it is only semantic.
+      data-dropzone is how the JS knows where drops are allowed.
+    */
+    body {
+      background-color: lightblue;
+    }
+
+    [data-pickzone],
+    [data-dropzone] {
+      align-items: center;
+      border: 3px dotted black;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+      min-height: 100px;
+    }
+
+    .item {
+      cursor: move;
+      /* what does this do? */
+      width: 50px;
+      height: auto;
+      touch-action: none;
+      user-select: none;
+      /* ensure the image itself captures pointer events */
+      pointer-events: auto;
+      /* Prevent default browser image drag behavior */
+      -webkit-user-drag: none;
+      -moz-user-drag: none;
+      /* CRITICAL FOR MOBILE - prevents default touch behaviors like scrolling/zooming, tells the browser not to handle touch events, letting our pointer events work */
+      z-index: 1;
+    }
+
+    /*
+      While dragging, the item is removed from layout and
+      positioned absolutely so it can follow the pointer.
+    */
+    .item.dragging {
+      position: absolute;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+      transform: scale(1.2);
+    }
+
+    /*
+      The clone is the layout placeholder.
+      It occupies space in a dropzone while the real
+      element is floating under the pointer.
+    */
+    .item.clone {
+      /* background: #eee; */
+      border: 2px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 
+    Pick zone is just a dropzone that starts populated.
+    The JS only cares about data-dropzone.
+  -->
+  <div data-pickzone data-dropzone>
+    <!-- <div class="item">Item 1</div>
+        <div class="item">Item 2</div>
+        <div class="item">Item 3</div> -->
+    <img class="item" src="../iso-room-dnd/bed.png">
+    <img class="item" src="../iso-room-dnd/bed.png">
+    <img class="item" src="../iso-room-dnd/bed.png">
+  </div>
+
+  <!-- An empty drop target -->
+  <div data-dropzone></div>
+
+  <script>
+    const items = document.querySelectorAll('.item');
+
+    [...items].forEach((item) => { // spread operator turns items into an array here
+
+      /*pointerdown starts a drag.*/
+      item.addEventListener('pointerdown', (event) => {
+
+        /*
+          Freeze the item’s current screen position.
+          We need absolute pixel values so we can move it
+          while it is detached from layout.
+        */
+        item.style.left = `${item.getBoundingClientRect().left}px`;
+        item.style.top = `${item.getBoundingClientRect().top}px`;
+
+        /*
+          Create a visual placeholder.
+          This clone will stay in the layout while
+          the real item is floating.
+        */
+        const clone = item.cloneNode();
+        clone.classList.add('clone');
+
+        /*
+          Insert the placeholder where the item used to be.
+          This prevents the container from collapsing. (explain?)
+        */
+        item.before(clone);
+
+        /*
+          Disable pointer events on the dragged element
+          so elementFromPoint() can see what is underneath it. (how does this work?)
+        */
+        item.style.pointerEvents = 'none';
+
+        item.classList.add('dragging');
+        document.body.append(item);
+
+        /*
+          Lock all future pointer events to this element,
+          even if the pointer leaves its bounds. (what does this mean?)
+        */
+        item.setPointerCapture(event.pointerId);
+
+        /*
+          pointerup commits the drop.
+          This is where the real DOM move happens.
+        */
+        const up = () => {
+
+          /*
+            Insert the real item exactly where the clone is.
+            This finalizes the drop.(what are after and before?)
+          */
+          clone.after(item);
+          clone.remove();
+
+          /*
+            Reset all drag styling. (why is removing these styles necessary?)
+          */
+          item.style.left = '';
+          item.style.top = '';
+          item.classList.remove('dragging');
+          item.style.pointerEvents = '';
+
+          /*
+            Cleanup event listeners and pointer capture.
+          */
+          item.removeEventListener('pointerup', up);
+          item.removeEventListener('pointermove', move);
+          item.releasePointerCapture(event.pointerId);
+        };
+
+        /*
+          pointermove updates position and manages drop targeting.
+        */
+        const move = (event) => {
+
+          /*
+            Move the floating element by how far
+            the pointer moved since the last frame.
+          */
+          item.style.left =
+            `${parseFloat(item.style.left) + event.movementX}px`;
+          item.style.top =
+            `${parseFloat(item.style.top) + event.movementY}px`;
+
+          /*
+            Hit-test the DOM to see what is under the dragged item. (what is parseFLoat, how does this block work?)
+          */
+          const hitTest = document.elementFromPoint(
+            parseFloat(item.style.left),
+            parseFloat(item.style.top)
+          );
+
+          /*
+            Walk up the DOM tree until we find a dropzone.
+          */
+          const dropzone = hitTest.closest('[data-dropzone]');
+          if (!dropzone) return;
+
+          /*
+            If the placeholder is not already inside this dropzone,
+            move it there — this enables cross-container drops (explain this).
+          */
+          if (clone.closest('[data-dropzone]') !== dropzone) {
+            dropzone.append(clone);
+            return;
+          }
+
+          /*
+            If we are inside the same dropzone, we now
+            determine where inside it the placeholder should go. (explain the for loop)
+          */
+          const dropzoneChildren = [...dropzone.children];
+          const cloneIndex = dropzoneChildren.indexOf(clone);
+
+          dropzoneChildren.forEach((child, index) => {
+            if (hitTest === clone) return;
+
+            if (hitTest === child) {
+              if (cloneIndex < index) {
+                child.after(clone);
+              } else {
+                child.before(clone);
+              }
+            }
+          });
+        };
+
+        /*
+          Attach the drag handlers.
+        */
+        item.addEventListener('pointerup', up);
+        item.addEventListener('pointermove', move);
+      });
+    });
+  </script>
+</body>
+
+</html>
+
+<!--Source: https://www.youtube.com/watch?v=QVgEzUXeT-I&t=1573s
+
+Notes: as soon as item is dragged over container it is added to it, it doesn't need to be dropped, may prove a bad choice for my room-->

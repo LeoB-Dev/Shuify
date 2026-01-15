@@ -47,12 +47,6 @@ function saveState() {
     localStorage.setItem('dragPositions', JSON.stringify(positions));
 }
 
-function rejectWrongSide() {
-    // if class = LeftRIghtDeny 
-    // don't allow onto left or right
-    // else if class = bottomdeny
-    // don't allow onto bottom
-}
 
 function addIsoStyles(dropZone, droppedElement) {
     if (dropZone.id === "room-bottom" && droppedElement.id === "iso-bed") {
