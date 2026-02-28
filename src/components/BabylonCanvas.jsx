@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Engine } from "@babylonjs/core";
 import { createScene } from "../scenes/createScene";
 
-export default function BabylonCanvas() {
+export default function BabylonCanvas({ onSceneReady }) {
     const canvasRef = useRef(null);
 
     useEffect(() => {
@@ -11,6 +11,8 @@ export default function BabylonCanvas() {
 
         const engine = new Engine(canvas, true);
         const scene = createScene(engine, canvas);
+
+        if (onSceneReady) onSceneReady(scene);
 
         engine.runRenderLoop(() => {
             scene.render();
