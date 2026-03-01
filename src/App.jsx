@@ -12,9 +12,27 @@ export default function App() {
   const sceneRef = useRef(null);
   // draggingItemRef is a ref copy of the store value so drop handlers always see the latest item
   const draggingItemRef = useRef(null);
+  // meshRegistryRef maps uid → mesh for every placed item so collision tests can check all of them
+  const meshRegistryRef = useRef({});
+
+  // Tests whether moving `mesh` to (newX, newY, newZ) would cause it to overlap any other
+  // registered mesh. Temporarily applies the candidate position, refreshes the world matrix
+  // for an accurate AABB, then restores — all synchronously before the next render frame.
+  const testCollision = (mesh, newX, newY, newZ) => {
+    const saved = mesh.position.clone();
+    mesh.position.set(newX, newY, newZ);
+    mesh.computeWorldMatrix(true);
+    const collides = Object.values(meshRegistryRef.current).some((other) => {
+      if (other === mesh) return false;
+      return mesh.intersectsMesh(other, false); // false = AABB (sufficient for axis-aligned boxes)
+    });
+    mesh.position.copyFrom(saved);
+    mesh.computeWorldMatrix(true);
+    return collides;
+  };
   const draggingItem = useSceneStore((s) => s.draggingItem);
   const addPlacedItem = useSceneStore((s) => s.addPlacedItem);
-  const updateItemPosition = useSceneStore((s) => s.updateItemPosition);
+  const updateItem = useSceneStore((s) => s.updateItem);
 
   draggingItemRef.current = draggingItem;
 
@@ -30,16 +48,31 @@ export default function App() {
     mesh.position.y = height / 2;
     mesh.position.z = pz;
     const uid = Date.now();
-    addPlacedItem({ uid, label: item.label, x: px, z: pz });
+    addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
+    meshRegistryRef.current[uid] = mesh;
     // Constrain dragging to the horizontal ground plane
     const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
-    // moveAttached=false lets us apply the delta ourselves, so there is no dead zone at walls
+    // moveAttached=false + absolute dragPlanePoint avoids dead zones at walls and collisions.
+    // grabOffset records the cursor-to-mesh delta at drag start; desired = dragPlanePoint + grabOffset.
     dragBehavior.moveAttached = false;
-    dragBehavior.onDragObservable.add((event) => {
-      mesh.position.x = Math.max(-5 + width / 2, Math.min(5 - width / 2, mesh.position.x + event.delta.x));
-      mesh.position.z = Math.max(-5 + depth / 2, Math.min(5 - depth / 2, mesh.position.z + event.delta.z));
+    let grabOffsetX = 0, grabOffsetZ = 0;
+    dragBehavior.onDragStartObservable.add((event) => {
+      grabOffsetX = mesh.position.x - event.dragPlanePoint.x;
+      grabOffsetZ = mesh.position.z - event.dragPlanePoint.z;
     });
-    dragBehavior.onDragEndObservable.add(() => { updateItemPosition(uid, mesh.position.x, mesh.position.z); });
+    dragBehavior.onDragObservable.add((event) => {
+      const newX = Math.max(-5 + width / 2, Math.min(5 - width / 2, event.dragPlanePoint.x + grabOffsetX));
+      const newZ = Math.max(-5 + depth / 2, Math.min(5 - depth / 2, event.dragPlanePoint.z + grabOffsetZ));
+      if (!testCollision(mesh, newX, mesh.position.y, newZ)) {
+        mesh.position.x = newX;
+        mesh.position.z = newZ;
+      }
+      // Always resync: whether blocked by a wall, collision, or neither.
+      // Cursor reversal then immediately produces 1:1 movement from wherever the cursor is.
+      grabOffsetX = mesh.position.x - event.dragPlanePoint.x;
+      grabOffsetZ = mesh.position.z - event.dragPlanePoint.z;
+    });
+    dragBehavior.onDragEndObservable.add(() => { updateItem(uid, { x: mesh.position.x, z: mesh.position.z }); });
     mesh.addBehavior(dragBehavior);
   };
 
@@ -66,9 +99,9 @@ export default function App() {
       // Compute the world AABB by iterating every visual mesh individually.
       // This is safer than getHierarchyBoundingVectors() which can miss meshes
       // if result.meshes[0] isn't actually the hierarchy root.
-      let minY = Infinity,  maxY = -Infinity;
-      let minX = Infinity,  maxX = -Infinity;
-      let minZ = Infinity,  maxZ = -Infinity;
+      let minY = Infinity, maxY = -Infinity;
+      let minX = Infinity, maxX = -Infinity;
+      let minZ = Infinity, maxZ = -Infinity;
       result.meshes.forEach((m) => {
         const bi = m.getBoundingInfo();
         if (!bi) return;
@@ -91,9 +124,9 @@ export default function App() {
 
       // Invisible hitbox centred at the model's midpoint
       const hitbox = MeshBuilder.CreateBox(`${item.id}_hitbox`, {
-        width:  maxX - minX,
+        width: maxX - minX,
         height: modelHeight,
-        depth:  maxZ - minZ,
+        depth: maxZ - minZ,
       }, scene);
       hitbox.visibility = 0;
       hitbox.position.set(px, hitboxWorldY, pz);
@@ -106,19 +139,31 @@ export default function App() {
       result.meshes.forEach((m) => { m.isPickable = false; });
 
       const uid = Date.now();
-      addPlacedItem({ uid, label: item.label, x: px, z: pz });
-
+      addPlacedItem({ uid, id: item.id, label: item.label, modelType: "glb", x: px, z: pz });
+      meshRegistryRef.current[uid] = hitbox;
       // Constrain dragging to the ground plane, same as box items
       const halfW = (maxX - minX) / 2;
       const halfD = (maxZ - minZ) / 2;
       const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
       dragBehavior.moveAttached = false;
-      dragBehavior.onDragObservable.add((event) => {
-        hitbox.position.x = Math.max(-5 + halfW, Math.min(5 - halfW, hitbox.position.x + event.delta.x));
-        hitbox.position.z = Math.max(-5 + halfD, Math.min(5 - halfD, hitbox.position.z + event.delta.z));
-        // root follows hitbox automatically via parenting — no manual sync
+      let grabOffsetX = 0, grabOffsetZ = 0;
+      dragBehavior.onDragStartObservable.add((event) => {
+        grabOffsetX = hitbox.position.x - event.dragPlanePoint.x;
+        grabOffsetZ = hitbox.position.z - event.dragPlanePoint.z;
       });
-      dragBehavior.onDragEndObservable.add(() => { updateItemPosition(uid, hitbox.position.x, hitbox.position.z); });
+      dragBehavior.onDragObservable.add((event) => {
+        const newX = Math.max(-5 + halfW, Math.min(5 - halfW, event.dragPlanePoint.x + grabOffsetX));
+        const newZ = Math.max(-5 + halfD, Math.min(5 - halfD, event.dragPlanePoint.z + grabOffsetZ));
+        if (!testCollision(hitbox, newX, hitbox.position.y, newZ)) {
+          hitbox.position.x = newX;
+          hitbox.position.z = newZ;
+          // root follows hitbox automatically via parenting — no manual sync
+        }
+        // Always resync: handles wall clamping and collision blocking uniformly.
+        grabOffsetX = hitbox.position.x - event.dragPlanePoint.x;
+        grabOffsetZ = hitbox.position.z - event.dragPlanePoint.z;
+      });
+      dragBehavior.onDragEndObservable.add(() => { updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z }); });
       hitbox.addBehavior(dragBehavior);
     } catch (error) {
       console.error("GLB load error:", error);
@@ -138,8 +183,8 @@ export default function App() {
     else if (hitName === "wallLeft") initialWall = "left";
     else if (hitName === "wallRight") initialWall = "right";
     else {
-      const dBack  = Math.abs(pt.z + 5);
-      const dLeft  = Math.abs(pt.x + 5);
+      const dBack = Math.abs(pt.z + 5);
+      const dLeft = Math.abs(pt.x + 5);
       const dRight = Math.abs(pt.x - 5);
       if (dBack <= dLeft && dBack <= dRight) initialWall = "back";
       else if (dLeft <= dRight) initialWall = "left";
@@ -150,7 +195,6 @@ export default function App() {
     const spawnY = Math.max(height / 2, Math.min(5 - height / 2, pt.y > height / 2 ? pt.y : 2.0));
 
     const uid = Date.now();
-    addPlacedItem({ uid, label: item.label, x: pt.x, z: pt.z });
 
     // Shared material — created once and reused when the mesh is rebuilt on a new wall
     const mat = new StandardMaterial(`${item.id}_mat_${uid}`, scene);
@@ -158,22 +202,33 @@ export default function App() {
 
     // Holds the active mesh so it can be disposed when switching walls
     let activeMesh = null;
+    let placed = false; // addPlacedItem is called once, after the first mesh is positioned
 
     const buildOnWall = (wall, posX, posZ, posY) => {
       if (activeMesh) activeMesh.dispose();
 
       let mesh, dragNormal, lockFn;
 
+      // grabOffsetA = grab offset along the wall's sliding axis (x for back wall, z for side walls)
+      // grabOffsetY = grab offset in the vertical axis (shared by all walls)
+      let grabOffsetA = 0, grabOffsetY = 0;
+
       if (wall === "back") {
         const wallZ = -4.9;
         mesh = MeshBuilder.CreateBox(`${item.id}_${uid}`, { width, height, depth }, scene);
         mesh.position.set(Math.max(-5 + width / 2, Math.min(5 - width / 2, posX)), posY, wallZ);
         dragNormal = new Vector3(0, 0, 1);
-        // delta.x slides along the wall, delta.y moves up/down; Z stays pinned to the wall face
+        // dragPlanePoint.x slides along the wall, .y moves up/down; Z always pinned to the wall face
         lockFn = (event) => {
+          const newX = Math.max(-5 + width / 2, Math.min(5 - width / 2, event.dragPlanePoint.x + grabOffsetA));
+          const newY = Math.max(height / 2, Math.min(5 - height / 2, event.dragPlanePoint.y + grabOffsetY));
+          if (!testCollision(mesh, newX, newY, wallZ)) {
+            mesh.position.x = newX;
+            mesh.position.y = newY;
+          }
+          grabOffsetA = mesh.position.x - event.dragPlanePoint.x;
+          grabOffsetY = mesh.position.y - event.dragPlanePoint.y;
           mesh.position.z = wallZ;
-          mesh.position.x = Math.max(-5 + width / 2, Math.min(5 - width / 2, mesh.position.x + event.delta.x));
-          mesh.position.y = Math.max(height / 2, Math.min(5 - height / 2, mesh.position.y + event.delta.y));
         };
       } else {
         // For side walls: build the box with dimensions already oriented for the wall so no
@@ -184,19 +239,41 @@ export default function App() {
         mesh = MeshBuilder.CreateBox(`${item.id}_${uid}`, { width: depth, height, depth: width }, scene);
         mesh.position.set(wallX, posY, Math.max(-5 + width / 2, Math.min(5 - width / 2, posZ)));
         dragNormal = wall === "left" ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0);
-        // delta.z slides along the wall, delta.y moves up/down; X stays pinned to the wall face
+        // dragPlanePoint.z slides along the wall, .y moves up/down; X always pinned to the wall face
         lockFn = (event) => {
+          const newZ = Math.max(-5 + width / 2, Math.min(5 - width / 2, event.dragPlanePoint.z + grabOffsetA));
+          const newY = Math.max(height / 2, Math.min(5 - height / 2, event.dragPlanePoint.y + grabOffsetY));
+          if (!testCollision(mesh, wallX, newY, newZ)) {
+            mesh.position.z = newZ;
+            mesh.position.y = newY;
+          }
+          grabOffsetA = mesh.position.z - event.dragPlanePoint.z;
+          grabOffsetY = mesh.position.y - event.dragPlanePoint.y;
           mesh.position.x = wallX;
-          mesh.position.z = Math.max(-5 + width / 2, Math.min(5 - width / 2, mesh.position.z + event.delta.z));
-          mesh.position.y = Math.max(height / 2, Math.min(5 - height / 2, mesh.position.y + event.delta.y));
         };
       }
 
       mesh.material = mat;
       activeMesh = mesh;
+      meshRegistryRef.current[uid] = mesh; // always points to the live mesh, even after wall switches
+
+      // Register the item in the store the first time a mesh is built (using its snapped position)
+      if (!placed) {
+        placed = true;
+        addPlacedItem({
+          uid, id: item.id, label: item.label, modelType: "wall",
+          x: mesh.position.x, z: mesh.position.z, y: mesh.position.y, wall,
+        });
+      }
 
       const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: dragNormal });
       dragBehavior.moveAttached = false;
+      dragBehavior.onDragStartObservable.add((event) => {
+        grabOffsetA = wall === "back"
+          ? mesh.position.x - event.dragPlanePoint.x
+          : mesh.position.z - event.dragPlanePoint.z;
+        grabOffsetY = mesh.position.y - event.dragPlanePoint.y;
+      });
       dragBehavior.onDragObservable.add(lockFn);
       dragBehavior.onDragEndObservable.add(() => {
         // Snapshot position before any disposal
@@ -214,7 +291,8 @@ export default function App() {
         }
 
         if (nextWall) buildOnWall(nextWall, x, z, y);
-        updateItemPosition(uid, x, z);
+        // Persist full wall-item state: position on the current wall + which wall it's on
+        updateItem(uid, { x, z, y, wall: nextWall ?? wall });
       });
 
       mesh.addBehavior(dragBehavior);
@@ -264,7 +342,12 @@ export default function App() {
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <BabylonCanvas onSceneReady={(scene) => (sceneRef.current = scene)} />
+        <BabylonCanvas onSceneReady={(scene) => {
+          sceneRef.current = scene;
+          // Register the pre-placed cabinet so spawned items collide with it too
+          const cabinet = scene.getMeshByName("cabinet");
+          if (cabinet) meshRegistryRef.current["cabinet"] = cabinet;
+        }} />
       </div>
     </div>
   );
