@@ -24,7 +24,7 @@ export function createScene(engine, canvas) {
         scene
     );
     camera.attachControl(canvas, true);
-    camera.upperBetaLimit = 1.50; // higher for lower limit
+    camera.upperBetaLimit = 1.5 // higher for lower limit
     camera.lowerRadiusLimit = 5;  // prevents zooming in too close
     camera.upperRadiusLimit = 130; // prevents zooming out too far
 
@@ -78,8 +78,13 @@ export function createScene(engine, canvas) {
     cabinetMaterial.diffuseColor = new Color3(0.76, 0.60, 0.42); // warm wood colour
     cabinet.material = cabinetMaterial;
 
-    // Drag behaviour
-    const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) }); // constrained to ground only
+    // Drag behaviour — constrained to ground, clamped inside room walls
+    const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
+    dragBehavior.moveAttached = false;
+    dragBehavior.onDragObservable.add((event) => {
+        cabinet.position.x = Math.max(-4, Math.min(4, cabinet.position.x + event.delta.x)); // 5 - width/2 = 4
+        cabinet.position.z = Math.max(-4.75, Math.min(4.75, cabinet.position.z + event.delta.z)); // 5 - depth/2 = 4.75
+    });
     cabinet.addBehavior(dragBehavior);
 
     return scene;
