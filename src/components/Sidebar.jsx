@@ -1,43 +1,15 @@
 import {
-    LayoutGrid,
-    AlignVerticalJustifyStart,
-    RectangleHorizontal,
-    Square,
     Rows3,
     Monitor,
     BedDouble,
+    Laptop,
+    Armchair,
+    AppWindow,
+    DoorOpen,
 } from "lucide-react";
 import useSceneStore from "../store/useSceneStore";
 
 const FURNITURE_ITEMS = [
-    {
-        id: "base-cabinet",
-        label: "Base Cabinet",
-        description: "Standard floor unit",
-        icon: RectangleHorizontal,
-        dimensions: { width: 2, height: 1, depth: 0.5 },
-    },
-    {
-        id: "wall-cabinet",
-        label: "Wall Cabinet",
-        description: "Mounted wall unit",
-        icon: AlignVerticalJustifyStart,
-        dimensions: { width: 1.5, height: 0.8, depth: 0.3 },
-    },
-    {
-        id: "tall-cabinet",
-        label: "Tall Cabinet",
-        description: "Full height storage",
-        icon: Square,
-        dimensions: { width: 1, height: 2.5, depth: 0.5 },
-    },
-    {
-        id: "island",
-        label: "Island",
-        description: "Centre kitchen island",
-        icon: LayoutGrid,
-        dimensions: { width: 3, height: 1, depth: 1.5 },
-    },
     {
         id: "shelf",
         label: "Shelf",
@@ -59,6 +31,36 @@ const FURNITURE_ITEMS = [
         description: "Double bed with headboard",
         icon: BedDouble,
         dimensions: { width: 1.6, height: 0.82, depth: 2.0 },
+    },
+    {
+        id: "desk",
+        label: "Desk",
+        description: "Writing desk with drawers",
+        icon: Laptop,
+        dimensions: { width: 2.2, height: 0.76, depth: 1.0 },
+    },
+    {
+        id: "chair",
+        label: "Chair",
+        description: "Desk chair with cushion",
+        icon: Armchair,
+        dimensions: { width: 0.58, height: 0.88, depth: 0.55 },
+    },
+    {
+        id: "window",
+        label: "Window",
+        description: "Wall mounted window",
+        icon: AppWindow,
+        mountType: "wall",
+        dimensions: { width: 1.4, height: 1.2, depth: 0.12 },
+    },
+    {
+        id: "door",
+        label: "Door",
+        description: "Room door with frame",
+        icon: DoorOpen,
+        mountType: "wall",
+        dimensions: { width: 1.4, height: 3.2, depth: 0.12 },
     },
 ];
 

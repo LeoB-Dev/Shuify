@@ -301,12 +301,254 @@ export default function App() {
     buildOnWall(initialWall, pt.x, pt.z, spawnY);
   };
 
+  // Spawns a detailed multi-mesh TV (screen, bezel, camera, LED, wall-mount bracket).
+  // Uses an invisible hitbox so drag/collision logic is identical to spawnWallBox,
+  // but all visual detail is built from child meshes parented to that hitbox.
+  const spawnTV = (scene, item, pickResult) => {
+    const W = item.dimensions.width;    // 1.6 — horizontal span
+    const H = item.dimensions.height;   // 0.9 — vertical span
+    const D = item.dimensions.depth;    // 0.05 — chassis thickness
+
+    const pt      = pickResult.pickedPoint;
+    const hitName = pickResult.pickedMesh?.name ?? "";
+
+    let initialWall;
+    if      (hitName === "wallBack")  initialWall = "back";
+    else if (hitName === "wallLeft")  initialWall = "left";
+    else if (hitName === "wallRight") initialWall = "right";
+    else {
+      const dBack  = Math.abs(pt.z + 5);
+      const dLeft  = Math.abs(pt.x + 5);
+      const dRight = Math.abs(pt.x - 5);
+      if   (dBack <= dLeft && dBack <= dRight) initialWall = "back";
+      else if (dLeft <= dRight)                initialWall = "left";
+      else                                     initialWall = "right";
+    }
+
+    const spawnY = Math.max(H / 2, Math.min(5 - H / 2, pt.y > H / 2 ? pt.y : 2.0));
+    const uid    = Date.now();
+
+    let activeHitbox = null;
+    let placed       = false;
+
+    // Helper: create a material
+    const mkMat = (name, r, g, b, sr = 0.06, sg = 0.06, sb = 0.08) => {
+      const mat = new StandardMaterial(name, scene);
+      mat.diffuseColor  = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      return mat;
+    };
+
+    // Helper: box parented to hitbox
+    const addBox = (hitbox, name, dims, lx, ly, lz, r, g, b, sr, sg, sb) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent     = hitbox;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      m.material   = mkMat(`${name}_mat`, r, g, b, sr, sg, sb);
+      return m;
+    };
+
+    const buildOnWall = (wall, posX, posZ, posY) => {
+      if (activeHitbox) {
+        activeHitbox.getChildMeshes().forEach(m => m.dispose());
+        activeHitbox.dispose();
+      }
+
+      let hitbox, dragNormal, lockFn;
+      let grabOffsetA = 0, grabOffsetY = 0;
+
+      // ── Back wall ────────────────────────────────────────────────────────────
+      if (wall === "back") {
+        const wallZ = -4.9;
+        hitbox = MeshBuilder.CreateBox(`tv_${uid}`, { width: W, height: H, depth: D }, scene);
+        hitbox.visibility = 0;
+        hitbox.position.set(Math.max(-5 + W / 2, Math.min(5 - W / 2, posX)), posY, wallZ);
+        dragNormal = new Vector3(0, 0, 1);
+        lockFn = (ev) => {
+          const newX = Math.max(-5 + W / 2, Math.min(5 - W / 2, ev.dragPlanePoint.x + grabOffsetA));
+          const newY = Math.max(H / 2, Math.min(5 - H / 2, ev.dragPlanePoint.y + grabOffsetY));
+          if (!testCollision(hitbox, newX, newY, wallZ)) {
+            hitbox.position.x = newX;
+            hitbox.position.y = newY;
+          }
+          grabOffsetA = hitbox.position.x - ev.dragPlanePoint.x;
+          grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
+          hitbox.position.z = wallZ;
+        };
+
+        // Front face is local +Z = D/2; all details protrude slightly past it
+        const fz = D / 2;
+
+        // Chassis body
+        addBox(hitbox, `tv_body_${uid}`,   { width: W,       height: H,     depth: D },
+          0, 0, 0,  0.06, 0.06, 0.08,  0.12, 0.12, 0.15);
+
+        // Screen panel (inset from bezel edges)
+        const sW = W - 0.10, sH = H - 0.12;
+        addBox(hitbox, `tv_screen_${uid}`, { width: sW, height: sH, depth: 0.004 },
+          0, 0.01, fz + 0.003,  0.04, 0.06, 0.16,  0.10, 0.16, 0.35);
+
+        // Top bezel strip (houses camera)
+        addBox(hitbox, `tv_bezel_top_${uid}`, { width: W, height: 0.055, depth: D + 0.002 },
+          0, H / 2 - 0.028, 0,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
+
+        // Camera bump — tiny cylinder on top bezel, facing room
+        const cam = MeshBuilder.CreateCylinder(`tv_cam_${uid}`,
+          { diameter: 0.028, height: 0.009, tessellation: 16 }, scene);
+        cam.parent    = hitbox;
+        cam.rotation.x = Math.PI / 2;
+        cam.position.set(0, H / 2 - 0.028, fz + 0.005);
+        cam.isPickable = false;
+        cam.material   = mkMat(`tv_cam_mat_${uid}`, 0.12, 0.12, 0.14, 0.22, 0.22, 0.26);
+
+        // Camera lens (darker inner dot)
+        const lens = MeshBuilder.CreateCylinder(`tv_lens_${uid}`,
+          { diameter: 0.014, height: 0.010, tessellation: 16 }, scene);
+          
+        lens.parent    = hitbox;
+        lens.rotation.x = Math.PI / 2;
+        lens.position.set(0, H / 2 - 0.028, fz + 0.009);
+        lens.isPickable = false;
+        lens.material   = mkMat(`tv_lens_mat_${uid}`, 0.04, 0.04, 0.06, 0.30, 0.30, 0.35);
+
+        // Bottom bezel strip
+        addBox(hitbox, `tv_bezel_bot_${uid}`, { width: W, height: 0.042, depth: D + 0.002 },
+          0, -H / 2 + 0.021, 0,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
+
+        // Power LED — tiny blue rect on bottom bezel
+        addBox(hitbox, `tv_led_${uid}`, { width: 0.026, height: 0.014, depth: 0.007 },
+          0, -H / 2 + 0.021, fz + 0.004,  0.08, 0.36, 1.0,  0.10, 0.44, 1.0);
+
+        // Side bezels (left & right slim strips)
+        [-W / 2 + 0.025, W / 2 - 0.025].forEach((bx, i) => {
+          addBox(hitbox, `tv_bezel_side_${i}_${uid}`, { width: 0.050, height: H, depth: D + 0.002 },
+            bx, 0, 0,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
+        });
+
+        // Wall-mount bracket (slim horizontal bar on the back)
+        addBox(hitbox, `tv_mount_${uid}`, { width: W * 0.50, height: 0.055, depth: 0.025 },
+          0, 0, -D / 2 - 0.013,  0.16, 0.16, 0.18,  0.20, 0.20, 0.22);
+
+      // ── Side walls ───────────────────────────────────────────────────────────
+      } else {
+        const wallX = wall === "left" ? -4.9 : 4.9;
+        const sign  = wall === "left" ? 1 : -1;   // +1 = room is toward +X, -1 toward -X
+
+        // Swap width↔depth so the TV spans Z and is thin in X (no mesh rotation needed)
+        hitbox = MeshBuilder.CreateBox(`tv_${uid}`, { width: D, height: H, depth: W }, scene);
+        hitbox.visibility = 0;
+        hitbox.position.set(wallX, posY, Math.max(-5 + W / 2, Math.min(5 - W / 2, posZ)));
+        dragNormal = wall === "left" ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0);
+        lockFn = (ev) => {
+          const newZ = Math.max(-5 + W / 2, Math.min(5 - W / 2, ev.dragPlanePoint.z + grabOffsetA));
+          const newY = Math.max(H / 2, Math.min(5 - H / 2, ev.dragPlanePoint.y + grabOffsetY));
+          if (!testCollision(hitbox, wallX, newY, newZ)) {
+            hitbox.position.z = newZ;
+            hitbox.position.y = newY;
+          }
+          grabOffsetA = hitbox.position.z - ev.dragPlanePoint.z;
+          grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
+          hitbox.position.x = wallX;
+        };
+
+        // Front face is local sign*(D/2); details protrude slightly past it
+        const fx = sign * (D / 2);
+
+        // Chassis body
+        addBox(hitbox, `tv_body_${uid}`, { width: D, height: H, depth: W },
+          0, 0, 0,  0.06, 0.06, 0.08,  0.12, 0.12, 0.15);
+
+        // Screen panel
+        const sH = H - 0.12, sZ = W - 0.10;
+        addBox(hitbox, `tv_screen_${uid}`, { width: 0.004, height: sH, depth: sZ },
+          fx + sign * 0.003, 0.01, 0,  0.04, 0.06, 0.16,  0.10, 0.16, 0.35);
+
+        // Top bezel
+        addBox(hitbox, `tv_bezel_top_${uid}`, { width: D + 0.002, height: 0.055, depth: W },
+          0, H / 2 - 0.028, 0,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
+
+        // Camera bump
+        const cam = MeshBuilder.CreateCylinder(`tv_cam_${uid}`,
+          { diameter: 0.028, height: 0.009, tessellation: 16 }, scene);
+        cam.parent    = hitbox;
+        cam.rotation.z = Math.PI / 2;    // axis points along X (toward room)
+        cam.position.set(fx + sign * 0.005, H / 2 - 0.028, 0);
+        cam.isPickable = false;
+        cam.material   = mkMat(`tv_cam_mat_${uid}`, 0.12, 0.12, 0.14, 0.22, 0.22, 0.26);
+
+        // Camera lens
+        const lens = MeshBuilder.CreateCylinder(`tv_lens_${uid}`,
+          { diameter: 0.014, height: 0.010, tessellation: 16 }, scene);
+        lens.parent    = hitbox;
+        lens.rotation.z = Math.PI / 2;
+        lens.position.set(fx + sign * 0.009, H / 2 - 0.028, 0);
+        lens.isPickable = false;
+        lens.material   = mkMat(`tv_lens_mat_${uid}`, 0.04, 0.04, 0.06, 0.30, 0.30, 0.35);
+
+        // Bottom bezel
+        addBox(hitbox, `tv_bezel_bot_${uid}`, { width: D + 0.002, height: 0.042, depth: W },
+          0, -H / 2 + 0.021, 0,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
+
+        // Power LED
+        addBox(hitbox, `tv_led_${uid}`, { width: 0.007, height: 0.014, depth: 0.026 },
+          fx + sign * 0.004, -H / 2 + 0.021, 0,  0.08, 0.36, 1.0,  0.10, 0.44, 1.0);
+
+        // Side bezels (top/bottom of TV span — these are along Z for side walls)
+        [-W / 2 + 0.025, W / 2 - 0.025].forEach((bz, i) => {
+          addBox(hitbox, `tv_bezel_side_${i}_${uid}`, { width: D + 0.002, height: H, depth: 0.050 },
+            0, 0, bz,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
+        });
+
+        // Wall-mount bracket
+        addBox(hitbox, `tv_mount_${uid}`, { width: 0.025, height: 0.055, depth: W * 0.50 },
+          -sign * (D / 2 + 0.013), 0, 0,  0.16, 0.16, 0.18,  0.20, 0.20, 0.22);
+      }
+
+      activeHitbox = hitbox;
+      meshRegistryRef.current[uid] = hitbox;
+
+      if (!placed) {
+        placed = true;
+        addPlacedItem({
+          uid, id: item.id, label: item.label, modelType: "wall",
+          x: hitbox.position.x, z: hitbox.position.z, y: hitbox.position.y, wall,
+        });
+      }
+
+      const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: dragNormal });
+      dragBehavior.moveAttached = false;
+      dragBehavior.onDragStartObservable.add((ev) => {
+        grabOffsetA = wall === "back"
+          ? hitbox.position.x - ev.dragPlanePoint.x
+          : hitbox.position.z - ev.dragPlanePoint.z;
+        grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
+      });
+      dragBehavior.onDragObservable.add(lockFn);
+      dragBehavior.onDragEndObservable.add(() => {
+        const x = hitbox.position.x, y = hitbox.position.y, z = hitbox.position.z;
+        let nextWall = null;
+        if (wall === "back") {
+          if (x < -2.5) nextWall = "left";
+          else if (x > 2.5) nextWall = "right";
+        } else {
+          if (z < -2.5) nextWall = "back";
+        }
+        if (nextWall) buildOnWall(nextWall, x, z, y);
+        updateItem(uid, { x, z, y, wall: nextWall ?? wall });
+      });
+      hitbox.addBehavior(dragBehavior);
+    };
+
+    buildOnWall(initialWall, pt.x, pt.z, spawnY);
+  };
+
   // Spawns a detailed multi-mesh bed (frame, headboard, footboard, legs, mattress, blanket, pillows).
   // All visual meshes are parented to an invisible hitbox that handles collision and drag.
   const spawnBed = (scene, item, px, pz) => {
-    const W   = 1.6;    // overall width  (X)
-    const D   = 2.0;    // overall depth  (Z)
-    const hbH = 0.82;   // headboard height = bounding-box height
+    const W   = 2.8;    // overall width  (X)
+    const D   = 4.0;    // overall depth  (Z)
+    const hbH = 1.05;   // headboard height = bounding-box height
 
     const uid = Date.now();
     const hitbox = MeshBuilder.CreateBox(`bed_${uid}`, { width: W, height: hbH, depth: D }, scene);
@@ -349,7 +591,7 @@ export default function App() {
     });
 
     // ── Turned cylindrical legs (four corners) ───────────────────────────
-    const legR = 0.04, legH = 0.30;
+    const legR = 0.06, legH = 0.34;
     [
       [-(W / 2 - 0.07), -(D / 2 - hbT - 0.07)],
       [ (W / 2 - 0.07), -(D / 2 - hbT - 0.07)],
@@ -444,8 +686,8 @@ export default function App() {
       0.55, 0.62, 0.74, 0.06, 0.07, 0.09);
 
     // ── Pillows ───────────────────────────────────────────────────────────
-    const plW = W / 2 - 0.12;
-    const plD = 0.44;
+    const plW = W / 2 - 0.16;
+    const plD = 0.70;
     const plH = 0.10;
     const plZ = mZ - mD / 2 + 0.05 + plD / 2;   // near the headboard end
 
@@ -478,6 +720,565 @@ export default function App() {
     hitbox.addBehavior(drag);
   };
 
+  // Spawns a detailed multi-mesh desk (slab, four steel legs, right-hand drawer pedestal).
+  const spawnDesk = (scene, item, px, pz) => {
+    const W     = 2.2;    // overall width  (X)
+    const D     = 1.0;    // overall depth  (Z)
+    const topH  = 0.76;   // desk surface height = hitbox height
+    const slabT = 0.05;   // desktop slab thickness
+
+    const uid = Date.now();
+    const hitbox = MeshBuilder.CreateBox(`desk_${uid}`, { width: W, height: topH, depth: D }, scene);
+    hitbox.visibility = 0;
+    hitbox.position.set(px, topH / 2, pz);
+    meshRegistryRef.current[uid] = hitbox;
+    addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
+
+    const wly = (wy) => wy - topH / 2;
+
+    const addBox = (name, dims, lx, ly, lz, r, g, b, sr = 0.08, sg = 0.07, sb = 0.04) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent = hitbox;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      const mat = new StandardMaterial(`${name}_mat`, scene);
+      mat.diffuseColor  = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      m.material = mat;
+      return m;
+    };
+
+    // ── Desktop slab (slight overhang on all sides) ───────────────────────
+    addBox(`desk_top_${uid}`, { width: W + 0.04, height: slabT, depth: D + 0.04 },
+      0, wly(topH - slabT / 2), 0,
+      0.72, 0.54, 0.30,  0.14, 0.11, 0.06);
+
+    // ── Four slim steel legs ──────────────────────────────────────────────
+    const legW  = 0.07, legD = 0.07;
+    const legH  = topH - slabT;
+    const inset = 0.10;
+    [
+      [-(W / 2 - inset), -(D / 2 - inset)],
+      [ (W / 2 - inset), -(D / 2 - inset)],
+      [-(W / 2 - inset),  (D / 2 - inset)],
+      [ (W / 2 - inset),  (D / 2 - inset)],
+    ].forEach(([lx, lz], i) =>
+      addBox(`desk_leg_${i}_${uid}`, { width: legW, height: legH, depth: legD },
+        lx, wly(legH / 2), lz,
+        0.24, 0.24, 0.26,  0.32, 0.32, 0.36));
+
+    // ── Right-hand drawer pedestal ────────────────────────────────────────
+    const dW     = 0.44;          // pedestal width
+    const dD     = D - 0.12;      // pedestal depth (inset from front + back)
+    const dFloor = 0.06;          // clearance above floor
+    const dH     = legH - dFloor; // pedestal height
+    const dX     = W / 2 - inset - dW / 2;  // centred on right-leg line
+
+    // Carcass
+    addBox(`desk_ped_${uid}`, { width: dW, height: dH, depth: dD },
+      dX, wly(dFloor + dH / 2), 0,
+      0.62, 0.46, 0.27,  0.08, 0.07, 0.04);
+
+    // 3 drawer fronts + handles
+    const numDrawers = 3;
+    const dfH = (dH - 0.04) / numDrawers;
+    for (let i = 0; i < numDrawers; i++) {
+      const dfY = dFloor + 0.02 + dfH / 2 + i * dfH;
+      addBox(`desk_df_${i}_${uid}`, { width: dW - 0.025, height: dfH - 0.018, depth: 0.016 },
+        dX, wly(dfY), dD / 2 + 0.009,
+        0.70, 0.52, 0.30,  0.12, 0.10, 0.06);
+      // Metal handle bar
+      addBox(`desk_dh_${i}_${uid}`, { width: 0.12, height: 0.013, depth: 0.020 },
+        dX, wly(dfY), dD / 2 + 0.018,
+        0.52, 0.52, 0.55,  0.42, 0.42, 0.46);
+    }
+
+    // ── Drag behaviour ────────────────────────────────────────────────────
+    const halfW = W / 2, halfD = D / 2;
+    const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
+    drag.moveAttached = false;
+    let grabX = 0, grabZ = 0;
+    drag.onDragStartObservable.add((ev) => {
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragObservable.add((ev) => {
+      const nx = Math.max(-5 + halfW, Math.min(5 - halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-5 + halfD, Math.min(5 - halfD, ev.dragPlanePoint.z + grabZ));
+      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+        hitbox.position.x = nx;
+        hitbox.position.z = nz;
+      }
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragEndObservable.add(() => updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z }));
+    hitbox.addBehavior(drag);
+  };
+
+  // Spawns a desk chair — steel legs, wood seat frame, dark fabric cushions + backrest.
+  const spawnChair = (scene, item, px, pz) => {
+    const W     = 0.58;   // overall width  (X)
+    const D     = 0.55;   // overall depth  (Z)
+    const seatH = 0.46;   // world Y of seat top surface
+    const seatT = 0.07;   // seat frame thickness
+    const legH  = seatH - seatT;   // 0.39
+    const backH = 0.42;   // backrest height above seat
+    const hbH   = seatH + backH;   // hitbox height = 0.88
+
+    const uid = Date.now();
+    const hitbox = MeshBuilder.CreateBox(`chair_${uid}`, { width: W, height: hbH, depth: D }, scene);
+    hitbox.visibility = 0;
+    hitbox.position.set(px, hbH / 2, pz);
+    meshRegistryRef.current[uid] = hitbox;
+    addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
+
+    const wly = (wy) => wy - hbH / 2;
+
+    const addBox = (name, dims, lx, ly, lz, r, g, b, sr = 0.08, sg = 0.08, sb = 0.09) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent = hitbox;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      const mat = new StandardMaterial(`${name}_mat`, scene);
+      mat.diffuseColor  = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      m.material = mat;
+      return m;
+    };
+
+    // ── Four slim steel legs ──────────────────────────────────────────────
+    const lw = 0.05, inset = 0.07;
+    [
+      [-(W / 2 - inset), -(D / 2 - inset)],
+      [ (W / 2 - inset), -(D / 2 - inset)],
+      [-(W / 2 - inset),  (D / 2 - inset)],
+      [ (W / 2 - inset),  (D / 2 - inset)],
+    ].forEach(([lx, lz], i) =>
+      addBox(`chair_leg_${i}_${uid}`, { width: lw, height: legH, depth: lw },
+        lx, wly(legH / 2), lz,
+        0.24, 0.24, 0.26,  0.32, 0.32, 0.36));
+
+    // Thin cross-brace connecting the two front legs and the two back legs
+    const braceY = legH * 0.38;
+    [-(D / 2 - inset), (D / 2 - inset)].forEach((bz, i) =>
+      addBox(`chair_brace_${i}_${uid}`, { width: W - 2 * inset, height: 0.025, depth: lw },
+        0, wly(braceY), bz,
+        0.24, 0.24, 0.26,  0.32, 0.32, 0.36));
+
+    // ── Seat frame (wood, matches desk top) ──────────────────────────────
+    addBox(`chair_seat_frame_${uid}`, { width: W, height: seatT, depth: D },
+      0, wly(seatH - seatT / 2), 0,
+      0.72, 0.54, 0.30,  0.14, 0.11, 0.06);
+
+    // ── Seat cushion (dark fabric) ────────────────────────────────────────
+    addBox(`chair_seat_cushion_${uid}`, { width: W - 0.08, height: 0.055, depth: D - 0.08 },
+      0, wly(seatH + 0.028), 0,
+      0.22, 0.22, 0.25,  0.04, 0.04, 0.05);
+
+    // ── Backrest uprights (two steel posts) ───────────────────────────────
+    const backZ  = +(D / 2 - inset);   // local Z of backrest (front edge, facing room)
+    const postH  = backH + seatT;
+    [-W / 4 + 0.02, W / 4 - 0.02].forEach((bx, i) =>
+      addBox(`chair_post_${i}_${uid}`, { width: lw, height: postH, depth: lw },
+        bx, wly(seatH - seatT + postH / 2), backZ,
+        0.24, 0.24, 0.26,  0.32, 0.32, 0.36));
+
+    // ── Backrest cushion (fabric pad between the uprights) ────────────────
+    addBox(`chair_back_cushion_${uid}`, { width: W - 0.14, height: backH - 0.04, depth: 0.07 },
+      0, wly(seatH + (backH - 0.04) / 2 + 0.02), backZ - 0.04,
+      0.22, 0.22, 0.25,  0.04, 0.04, 0.05);
+
+    // ── Drag behaviour ────────────────────────────────────────────────────
+    const halfW = W / 2, halfD = D / 2;
+    const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
+    drag.moveAttached = false;
+    let grabX = 0, grabZ = 0;
+    drag.onDragStartObservable.add((ev) => {
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragObservable.add((ev) => {
+      const nx = Math.max(-5 + halfW, Math.min(5 - halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-5 + halfD, Math.min(5 - halfD, ev.dragPlanePoint.z + grabZ));
+      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+        hitbox.position.x = nx;
+        hitbox.position.z = nz;
+      }
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragEndObservable.add(() => updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z }));
+    hitbox.addBehavior(drag);
+  };
+
+  // Spawns a wall-mounted window with frame, glass pane and cross dividers.
+  // Identical wall-snap / drag behaviour to the TV.
+  const spawnWindow = (scene, item, pickResult) => {
+    const W  = item.dimensions.width;   // 1.4
+    const H  = item.dimensions.height;  // 1.2
+    const D  = item.dimensions.depth;   // 0.12
+    const fT = 0.07;   // frame border thickness
+
+    const pt      = pickResult.pickedPoint;
+    const hitName = pickResult.pickedMesh?.name ?? "";
+
+    let initialWall;
+    if      (hitName === "wallBack")  initialWall = "back";
+    else if (hitName === "wallLeft")  initialWall = "left";
+    else if (hitName === "wallRight") initialWall = "right";
+    else {
+      const dBack  = Math.abs(pt.z + 5);
+      const dLeft  = Math.abs(pt.x + 5);
+      const dRight = Math.abs(pt.x - 5);
+      if   (dBack <= dLeft && dBack <= dRight) initialWall = "back";
+      else if (dLeft <= dRight)                initialWall = "left";
+      else                                     initialWall = "right";
+    }
+
+    const spawnY = Math.max(H / 2, Math.min(5 - H / 2, pt.y > H / 2 ? pt.y : 2.2));
+    const uid    = Date.now();
+
+    let activeHitbox = null;
+    let placed       = false;
+
+    const mkMat = (name, r, g, b, alpha = 1, sr = 0.05, sg = 0.05, sb = 0.05) => {
+      const mat = new StandardMaterial(name, scene);
+      mat.diffuseColor  = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      if (alpha < 1) { mat.alpha = alpha; }
+      return mat;
+    };
+
+    const addBox = (parent, name, dims, lx, ly, lz, r, g, b, alpha = 1) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent     = parent;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      m.material   = mkMat(`${name}_mat`, r, g, b, alpha);
+      return m;
+    };
+
+    // Builds 4 frame strips + glass + cross dividers parented to hitbox.
+    // fx/fy/fz describe the offset direction toward the room face.
+    const addWindowDetail = (hitbox, wall) => {
+      const frameCol  = [0.88, 0.86, 0.82];   // warm white frame
+      const divT      = 0.035;                 // cross-divider thickness
+
+      if (wall === "back") {
+        const fz = D / 2;   // front face local Z
+        // Frame strips
+        addBox(hitbox, `win_top_${uid}`,    { width: W,       height: fT,      depth: D }, 0,  H/2 - fT/2, 0, ...frameCol);
+        addBox(hitbox, `win_bot_${uid}`,    { width: W,       height: fT,      depth: D }, 0, -H/2 + fT/2, 0, ...frameCol);
+        addBox(hitbox, `win_left_${uid}`,   { width: fT,      height: H-2*fT,  depth: D }, -W/2+fT/2, 0, 0, ...frameCol);
+        addBox(hitbox, `win_right_${uid}`,  { width: fT,      height: H-2*fT,  depth: D },  W/2-fT/2, 0, 0, ...frameCol);
+        // Glass pane
+        addBox(hitbox, `win_glass_${uid}`,  { width: W-2*fT,  height: H-2*fT,  depth: 0.008 }, 0, 0, fz+0.001, 0.72, 0.86, 0.95, 0.35);
+        // Cross dividers
+        addBox(hitbox, `win_div_h_${uid}`,  { width: W-2*fT,  height: divT,    depth: 0.012 }, 0, 0, fz+0.003, ...frameCol);
+        addBox(hitbox, `win_div_v_${uid}`,  { width: divT,    height: H-2*fT,  depth: 0.012 }, 0, 0, fz+0.003, ...frameCol);
+      } else {
+        const sign = wall === "left" ? 1 : -1;
+        const fx   = sign * D / 2;
+        // Frame strips
+        addBox(hitbox, `win_top_${uid}`,    { width: D,       height: fT,      depth: W }, 0,  H/2 - fT/2, 0, ...frameCol);
+        addBox(hitbox, `win_bot_${uid}`,    { width: D,       height: fT,      depth: W }, 0, -H/2 + fT/2, 0, ...frameCol);
+        addBox(hitbox, `win_left_${uid}`,   { width: D,       height: H-2*fT,  depth: fT }, 0, 0, -W/2+fT/2, ...frameCol);
+        addBox(hitbox, `win_right_${uid}`,  { width: D,       height: H-2*fT,  depth: fT }, 0, 0,  W/2-fT/2, ...frameCol);
+        // Glass pane
+        addBox(hitbox, `win_glass_${uid}`,  { width: 0.008,   height: H-2*fT,  depth: W-2*fT }, fx+sign*0.001, 0, 0, 0.72, 0.86, 0.95, 0.35);
+        // Cross dividers
+        addBox(hitbox, `win_div_h_${uid}`,  { width: 0.012,   height: divT,    depth: W-2*fT }, fx+sign*0.003, 0, 0, ...frameCol);
+        addBox(hitbox, `win_div_v_${uid}`,  { width: 0.012,   height: H-2*fT,  depth: divT   }, fx+sign*0.003, 0, 0, ...frameCol);
+      }
+    };
+
+    const buildOnWall = (wall, posX, posZ, posY) => {
+      if (activeHitbox) {
+        activeHitbox.getChildMeshes().forEach(m => m.dispose());
+        activeHitbox.dispose();
+      }
+
+      let hitbox, dragNormal, lockFn;
+      let grabOffsetA = 0, grabOffsetY = 0;
+
+      if (wall === "back") {
+        const wallZ = -4.9;
+        hitbox = MeshBuilder.CreateBox(`win_${uid}`, { width: W, height: H, depth: D }, scene);
+        hitbox.visibility = 0;
+        hitbox.position.set(Math.max(-5 + W/2, Math.min(5 - W/2, posX)), posY, wallZ);
+        dragNormal = new Vector3(0, 0, 1);
+        lockFn = (ev) => {
+          const newX = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.x + grabOffsetA));
+          const newY = Math.max(H/2, Math.min(5 - H/2, ev.dragPlanePoint.y + grabOffsetY));
+          if (!testCollision(hitbox, newX, newY, wallZ)) { hitbox.position.x = newX; hitbox.position.y = newY; }
+          grabOffsetA = hitbox.position.x - ev.dragPlanePoint.x;
+          grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
+          hitbox.position.z = wallZ;
+        };
+      } else {
+        const wallX = wall === "left" ? -4.9 : 4.9;
+        hitbox = MeshBuilder.CreateBox(`win_${uid}`, { width: D, height: H, depth: W }, scene);
+        hitbox.visibility = 0;
+        hitbox.position.set(wallX, posY, Math.max(-5 + W/2, Math.min(5 - W/2, posZ)));
+        dragNormal = wall === "left" ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0);
+        lockFn = (ev) => {
+          const newZ = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.z + grabOffsetA));
+          const newY = Math.max(H/2, Math.min(5 - H/2, ev.dragPlanePoint.y + grabOffsetY));
+          if (!testCollision(hitbox, wallX, newY, newZ)) { hitbox.position.z = newZ; hitbox.position.y = newY; }
+          grabOffsetA = hitbox.position.z - ev.dragPlanePoint.z;
+          grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
+          hitbox.position.x = wallX;
+        };
+      }
+
+      addWindowDetail(hitbox, wall);
+      activeHitbox = hitbox;
+      meshRegistryRef.current[uid] = hitbox;
+
+      if (!placed) {
+        placed = true;
+        addPlacedItem({
+          uid, id: item.id, label: item.label, modelType: "wall",
+          x: hitbox.position.x, z: hitbox.position.z, y: hitbox.position.y, wall,
+        });
+      }
+
+      const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: dragNormal });
+      dragBehavior.moveAttached = false;
+      dragBehavior.onDragStartObservable.add((ev) => {
+        grabOffsetA = wall === "back"
+          ? hitbox.position.x - ev.dragPlanePoint.x
+          : hitbox.position.z - ev.dragPlanePoint.z;
+        grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
+      });
+      dragBehavior.onDragObservable.add(lockFn);
+      dragBehavior.onDragEndObservable.add(() => {
+        const x = hitbox.position.x, y = hitbox.position.y, z = hitbox.position.z;
+        let nextWall = null;
+        if (wall === "back") {
+          if (x < -2.5) nextWall = "left";
+          else if (x > 2.5) nextWall = "right";
+        } else {
+          if (z < -2.5) nextWall = "back";
+        }
+        if (nextWall) buildOnWall(nextWall, x, z, y);
+        updateItem(uid, { x, z, y, wall: nextWall ?? wall });
+      });
+      hitbox.addBehavior(dragBehavior);
+    };
+
+    buildOnWall(initialWall, pt.x, pt.z, spawnY);
+  };
+
+  // Spawns a wall-mounted door: frame + slab + two raised panels + handle.
+  // Y is always locked to floor level — the door never floats.
+  const spawnDoor = (scene, item, pickResult) => {
+    const W  = item.dimensions.width;   // 0.9
+    const H  = item.dimensions.height;  // 2.1
+    const D  = item.dimensions.depth;   // 0.10
+    const fT = 0.08;   // frame border thickness
+
+    const pt      = pickResult.pickedPoint;
+    const hitName = pickResult.pickedMesh?.name ?? "";
+
+    let initialWall;
+    if      (hitName === "wallBack")  initialWall = "back";
+    else if (hitName === "wallLeft")  initialWall = "left";
+    else if (hitName === "wallRight") initialWall = "right";
+    else {
+      const dBack  = Math.abs(pt.z + 5);
+      const dLeft  = Math.abs(pt.x + 5);
+      const dRight = Math.abs(pt.x - 5);
+      if   (dBack <= dLeft && dBack <= dRight) initialWall = "back";
+      else if (dLeft <= dRight)                initialWall = "left";
+      else                                     initialWall = "right";
+    }
+
+    // Door always sits on the floor
+    const spawnY = H / 2;
+    const uid    = Date.now();
+
+    let activeHitbox = null;
+    let placed       = false;
+
+    const addBox = (parent, name, dims, lx, ly, lz, r, g, b, sr = 0.06, sg = 0.05, sb = 0.03) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent = parent;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      const mat = new StandardMaterial(`${name}_mat`, scene);
+      mat.diffuseColor  = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      m.material = mat;
+      return m;
+    };
+
+    const addDoorDetail = (hitbox, wall) => {
+      // Shared dimensions
+      const slabW = W - 2 * fT;          // 0.74  — door slab width
+      const slabH = H - fT;              // 2.02  — door slab height
+      const slabT = 0.036;               // slab thickness (proud of frame)
+      const jamCY = -fT / 2;             // Y centre of left/right jambs
+
+      // Panel layout (two panels split by a mid-rail) — all relative to H
+      const midRailH = 0.05;
+      const midRailY = 0.00;
+      const pW       = slabW - 0.12;
+      const upPH  = H / 2 - 0.245;   const upPY  =  H / 4 - 0.028;
+      const loPH  = H / 2 - 0.165;   const loPY  = -H / 4 - 0.013;
+
+      if (wall === "back") {
+        const fz = D / 2;
+
+        // Frame — top + left + right (no bottom: door reaches the floor)
+        addBox(hitbox, `door_top_${uid}`,   { width: W,    height: fT,     depth: D }, 0,           H/2-fT/2, 0, 0.86, 0.83, 0.78);
+        addBox(hitbox, `door_ljamb_${uid}`, { width: fT,   height: slabH,  depth: D }, -W/2+fT/2,  jamCY,    0, 0.86, 0.83, 0.78);
+        addBox(hitbox, `door_rjamb_${uid}`, { width: fT,   height: slabH,  depth: D },  W/2-fT/2,  jamCY,    0, 0.86, 0.83, 0.78);
+
+        // Door slab
+        addBox(hitbox, `door_slab_${uid}`,  { width: slabW, height: slabH, depth: slabT },
+          0, jamCY, fz - slabT/2 + 0.008,  0.62, 0.46, 0.27);
+
+        // Mid rail
+        addBox(hitbox, `door_midrail_${uid}`, { width: slabW, height: midRailH, depth: slabT+0.006 },
+          0, midRailY, fz - slabT/2 + 0.011,  0.56, 0.41, 0.23);
+
+        // Raised panels
+        addBox(hitbox, `door_panel_up_${uid}`, { width: pW, height: upPH, depth: 0.014 },
+          0, upPY, fz + 0.010,  0.70, 0.53, 0.30,  0.10, 0.08, 0.05);
+        addBox(hitbox, `door_panel_lo_${uid}`, { width: pW, height: loPH, depth: 0.014 },
+          0, loPY, fz + 0.010,  0.70, 0.53, 0.30,  0.10, 0.08, 0.05);
+
+        // Handle backplate + knob (handle-side = right)
+        const hx = slabW / 2 - 0.09;
+        addBox(hitbox, `door_plate_${uid}`, { width: 0.038, height: 0.13, depth: 0.016 },
+          hx, midRailY, fz + 0.018,  0.72, 0.60, 0.22,  0.50, 0.42, 0.15);
+        const knob = MeshBuilder.CreateCylinder(`door_knob_${uid}`,
+          { diameter: 0.038, height: 0.055, tessellation: 16 }, scene);
+        knob.parent    = hitbox;
+        knob.rotation.x = Math.PI / 2;
+        knob.position.set(hx, midRailY, fz + 0.046);
+        knob.isPickable = false;
+        const km = new StandardMaterial(`door_knob_mat_${uid}`, scene);
+        km.diffuseColor  = new Color3(0.78, 0.64, 0.20);
+        km.specularColor = new Color3(0.62, 0.52, 0.16);
+        knob.material = km;
+
+      } else {
+        // Side walls — hitbox dims: { width: D, height: H, depth: W }
+        const sign = wall === "left" ? 1 : -1;
+        const fx   = sign * D / 2;
+
+        // Frame
+        addBox(hitbox, `door_top_${uid}`,   { width: D,    height: fT,    depth: W },  0, H/2-fT/2, 0, 0.86, 0.83, 0.78);
+        addBox(hitbox, `door_ljamb_${uid}`, { width: D,    height: slabH, depth: fT }, 0, jamCY, -W/2+fT/2, 0.86, 0.83, 0.78);
+        addBox(hitbox, `door_rjamb_${uid}`, { width: D,    height: slabH, depth: fT }, 0, jamCY,  W/2-fT/2, 0.86, 0.83, 0.78);
+
+        // Slab
+        addBox(hitbox, `door_slab_${uid}`, { width: slabT, height: slabH, depth: slabW },
+          fx - sign*(slabT/2 - 0.008), jamCY, 0,  0.62, 0.46, 0.27);
+
+        // Mid rail
+        addBox(hitbox, `door_midrail_${uid}`, { width: slabT+0.006, height: midRailH, depth: slabW },
+          fx - sign*(slabT/2 - 0.011), midRailY, 0,  0.56, 0.41, 0.23);
+
+        // Raised panels
+        addBox(hitbox, `door_panel_up_${uid}`, { width: 0.014, height: upPH, depth: pW },
+          fx + sign*0.010, upPY, 0,  0.70, 0.53, 0.30,  0.10, 0.08, 0.05);
+        addBox(hitbox, `door_panel_lo_${uid}`, { width: 0.014, height: loPH, depth: pW },
+          fx + sign*0.010, loPY, 0,  0.70, 0.53, 0.30,  0.10, 0.08, 0.05);
+
+        // Handle backplate + knob
+        const hz = slabW / 2 - 0.09;
+        addBox(hitbox, `door_plate_${uid}`, { width: 0.016, height: 0.13, depth: 0.038 },
+          fx + sign*0.018, midRailY, hz,  0.72, 0.60, 0.22,  0.50, 0.42, 0.15);
+        const knob = MeshBuilder.CreateCylinder(`door_knob_${uid}`,
+          { diameter: 0.038, height: 0.055, tessellation: 16 }, scene);
+        knob.parent    = hitbox;
+        knob.rotation.z = sign * Math.PI / 2;
+        knob.position.set(fx + sign * 0.046, midRailY, hz);
+        knob.isPickable = false;
+        const km = new StandardMaterial(`door_knob_mat_${uid}`, scene);
+        km.diffuseColor  = new Color3(0.78, 0.64, 0.20);
+        km.specularColor = new Color3(0.62, 0.52, 0.16);
+        knob.material = km;
+      }
+    };
+
+    const buildOnWall = (wall, posX, posZ) => {
+      if (activeHitbox) {
+        activeHitbox.getChildMeshes().forEach(m => m.dispose());
+        activeHitbox.dispose();
+      }
+
+      let hitbox, dragNormal, lockFn;
+      let grabOffsetA = 0;
+
+      if (wall === "back") {
+        const wallZ = -4.9;
+        hitbox = MeshBuilder.CreateBox(`door_${uid}`, { width: W, height: H, depth: D }, scene);
+        hitbox.visibility = 0;
+        hitbox.position.set(Math.max(-5 + W/2, Math.min(5 - W/2, posX)), spawnY, wallZ);
+        dragNormal = new Vector3(0, 0, 1);
+        lockFn = (ev) => {
+          const newX = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.x + grabOffsetA));
+          if (!testCollision(hitbox, newX, spawnY, wallZ)) hitbox.position.x = newX;
+          grabOffsetA = hitbox.position.x - ev.dragPlanePoint.x;
+          hitbox.position.set(hitbox.position.x, spawnY, wallZ);
+        };
+      } else {
+        const wallX = wall === "left" ? -4.9 : 4.9;
+        hitbox = MeshBuilder.CreateBox(`door_${uid}`, { width: D, height: H, depth: W }, scene);
+        hitbox.visibility = 0;
+        hitbox.position.set(wallX, spawnY, Math.max(-5 + W/2, Math.min(5 - W/2, posZ)));
+        dragNormal = wall === "left" ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0);
+        lockFn = (ev) => {
+          const newZ = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.z + grabOffsetA));
+          if (!testCollision(hitbox, wallX, spawnY, newZ)) hitbox.position.z = newZ;
+          grabOffsetA = hitbox.position.z - ev.dragPlanePoint.z;
+          hitbox.position.set(wallX, spawnY, hitbox.position.z);
+        };
+      }
+
+      addDoorDetail(hitbox, wall);
+      activeHitbox = hitbox;
+      meshRegistryRef.current[uid] = hitbox;
+
+      if (!placed) {
+        placed = true;
+        addPlacedItem({
+          uid, id: item.id, label: item.label, modelType: "wall",
+          x: hitbox.position.x, z: hitbox.position.z, y: hitbox.position.y, wall,
+        });
+      }
+
+      const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: dragNormal });
+      dragBehavior.moveAttached = false;
+      dragBehavior.onDragStartObservable.add((ev) => {
+        grabOffsetA = wall === "back"
+          ? hitbox.position.x - ev.dragPlanePoint.x
+          : hitbox.position.z - ev.dragPlanePoint.z;
+      });
+      dragBehavior.onDragObservable.add(lockFn);
+      dragBehavior.onDragEndObservable.add(() => {
+        const x = hitbox.position.x, z = hitbox.position.z;
+        let nextWall = null;
+        if (wall === "back") {
+          if (x < -2.5) nextWall = "left";
+          else if (x > 2.5) nextWall = "right";
+        } else {
+          if (z < -2.5) nextWall = "back";
+        }
+        if (nextWall) buildOnWall(nextWall, x, z);
+        updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z, y: spawnY, wall: nextWall ?? wall });
+      });
+      hitbox.addBehavior(dragBehavior);
+    };
+
+    buildOnWall(initialWall, pt.x, pt.z);
+  };
+
   // Items whose id matches a file in /public/models/ are loaded as GLB; everything else is a box
   const GLB_ITEMS = ["shelf"];
 
@@ -501,12 +1302,22 @@ export default function App() {
 
     const { x: px, z: pz } = pickResult.pickedPoint;
 
-    if (item.mountType === "wall") {
+    if (item.id === "tv") {
+      spawnTV(scene, item, pickResult);
+    } else if (item.id === "window") {
+      spawnWindow(scene, item, pickResult);
+    } else if (item.id === "door") {
+      spawnDoor(scene, item, pickResult);
+    } else if (item.mountType === "wall") {
       spawnWallBox(scene, item, pickResult);
     } else if (GLB_ITEMS.includes(item.id)) {
       spawnGLB(scene, item, px, pz);
     } else if (item.id === "bed") {
       spawnBed(scene, item, px, pz);
+    } else if (item.id === "desk") {
+      spawnDesk(scene, item, px, pz);
+    } else if (item.id === "chair") {
+      spawnChair(scene, item, px, pz);
     } else {
       spawnBox(scene, item, px, pz);
     }
@@ -523,9 +1334,6 @@ export default function App() {
       >
         <BabylonCanvas onSceneReady={(scene) => {
           sceneRef.current = scene;
-          // Register the pre-placed cabinet so spawned items collide with it too
-          const cabinet = scene.getMeshByName("cabinet");
-          if (cabinet) meshRegistryRef.current["cabinet"] = cabinet;
         }} />
       </div>
     </div>
