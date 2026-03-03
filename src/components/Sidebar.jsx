@@ -5,6 +5,7 @@ import {
     Square,
     Rows3,
     Monitor,
+    BedDouble,
 } from "lucide-react";
 import useSceneStore from "../store/useSceneStore";
 
@@ -51,6 +52,13 @@ const FURNITURE_ITEMS = [
         icon: Monitor,
         mountType: "wall",
         dimensions: { width: 1.6, height: 0.9, depth: 0.05 },
+    },
+    {
+        id: "bed",
+        label: "Bed",
+        description: "Double bed with headboard",
+        icon: BedDouble,
+        dimensions: { width: 1.6, height: 0.82, depth: 2.0 },
     },
 ];
 

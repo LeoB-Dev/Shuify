@@ -301,6 +301,183 @@ export default function App() {
     buildOnWall(initialWall, pt.x, pt.z, spawnY);
   };
 
+  // Spawns a detailed multi-mesh bed (frame, headboard, footboard, legs, mattress, blanket, pillows).
+  // All visual meshes are parented to an invisible hitbox that handles collision and drag.
+  const spawnBed = (scene, item, px, pz) => {
+    const W   = 1.6;    // overall width  (X)
+    const D   = 2.0;    // overall depth  (Z)
+    const hbH = 0.82;   // headboard height = bounding-box height
+
+    const uid = Date.now();
+    const hitbox = MeshBuilder.CreateBox(`bed_${uid}`, { width: W, height: hbH, depth: D }, scene);
+    hitbox.visibility = 0;
+    hitbox.position.set(px, hbH / 2, pz);
+    meshRegistryRef.current[uid] = hitbox;
+    addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
+
+    // Convert a world-Y value (height above floor) to hitbox-local Y
+    const wly = (wy) => wy - hbH / 2;
+
+    // Create a box mesh parented to the hitbox with a StandardMaterial
+    const addBox = (name, dims, lx, ly, lz, r, g, b, sr = 0.08, sg = 0.06, sb = 0.03) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent = hitbox;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      const mat = new StandardMaterial(`${name}_mat`, scene);
+      mat.diffuseColor = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      m.material = mat;
+      return m;
+    };
+
+    // ── Frame slab ───────────────────────────────────────────────────────
+    const fH  = 0.28;
+    const hbT = 0.10;   // headboard thickness (Z)
+    const fbT = 0.08;   // footboard thickness (Z)
+
+    addBox('bed_frame', { width: W, height: fH, depth: D },
+      0, wly(fH / 2), 0,
+      0.32, 0.18, 0.07, 0.18, 0.12, 0.05);
+
+    // Slim side rails sitting on top of the frame
+    const railH = 0.06, railT = 0.06;
+    [-(W / 2 - railT / 2), W / 2 - railT / 2].forEach((rx, i) => {
+      addBox(`bed_rail_${i}`, { width: railT, height: railH, depth: D - 0.04 },
+        rx, wly(fH + railH / 2), 0,
+        0.28, 0.15, 0.06, 0.15, 0.10, 0.04);
+    });
+
+    // ── Turned cylindrical legs (four corners) ───────────────────────────
+    const legR = 0.04, legH = 0.30;
+    [
+      [-(W / 2 - 0.07), -(D / 2 - hbT - 0.07)],
+      [ (W / 2 - 0.07), -(D / 2 - hbT - 0.07)],
+      [-(W / 2 - 0.07),  (D / 2 - fbT - 0.07)],
+      [ (W / 2 - 0.07),  (D / 2 - fbT - 0.07)],
+    ].forEach(([lx, lz], i) => {
+      const cyl = MeshBuilder.CreateCylinder(`bed_leg_${i}`,
+        { diameter: legR * 2, height: legH, tessellation: 12 }, scene);
+      cyl.parent = hitbox;
+      cyl.position.set(lx, wly(legH / 2), lz);
+      cyl.isPickable = false;
+      const mat = new StandardMaterial(`bed_leg_${i}_mat`, scene);
+      mat.diffuseColor = new Color3(0.22, 0.12, 0.05);
+      mat.specularColor = new Color3(0.28, 0.20, 0.09);
+      cyl.material = mat;
+    });
+
+    // ── Headboard ────────────────────────────────────────────────────────
+    const hbZ = -D / 2 + hbT / 2;              // local Z centre of headboard panel
+    const hbFrontZ = hbZ + hbT / 2;            // local Z of its front (room-facing) surface
+
+    addBox('bed_headboard', { width: W + 0.06, height: hbH, depth: hbT },
+      0, wly(hbH / 2), hbZ,
+      0.28, 0.15, 0.06, 0.20, 0.14, 0.06);
+
+    // Two raised decorative panels
+    const panelW = (W - 0.18) / 2;
+    const panelH = hbH - 0.26;
+    [-W / 4, W / 4].forEach((px2, i) => {
+      addBox(`bed_hbpanel_${i}`, { width: panelW, height: panelH, depth: 0.025 },
+        px2, wly(0.15 + panelH / 2), hbFrontZ + 0.013,
+        0.42, 0.26, 0.10, 0.12, 0.09, 0.04);
+    });
+
+    // Vertical centre divider between the panels
+    addBox('bed_hb_divider', { width: 0.04, height: panelH, depth: 0.02 },
+      0, wly(0.15 + panelH / 2), hbFrontZ + 0.01,
+      0.30, 0.17, 0.07, 0.12, 0.09, 0.04);
+
+    // Capping rail across the top of the headboard
+    addBox('bed_hb_topcap', { width: W + 0.06, height: 0.08, depth: hbT + 0.02 },
+      0, wly(hbH - 0.04), hbZ,
+      0.24, 0.13, 0.05, 0.28, 0.20, 0.09);
+
+    // ── Footboard ────────────────────────────────────────────────────────
+    const fbH = 0.45;
+    const fbZ = D / 2 - fbT / 2;
+
+    addBox('bed_footboard', { width: W + 0.06, height: fbH, depth: fbT },
+      0, wly(fbH / 2), fbZ,
+      0.28, 0.15, 0.06, 0.20, 0.14, 0.06);
+
+    addBox('bed_fb_topcap', { width: W + 0.06, height: 0.06, depth: fbT + 0.02 },
+      0, wly(fbH - 0.03), fbZ,
+      0.24, 0.13, 0.05, 0.28, 0.20, 0.09);
+
+    // ── Mattress ─────────────────────────────────────────────────────────
+    const mH  = 0.22;
+    const mD  = D - hbT - fbT - 0.04;
+    const mZ  = (hbT - fbT) / 2;             // slight offset because boards differ in thickness
+    const mTop = fH + mH;                    // world Y of mattress top surface
+
+    addBox('bed_mattress', { width: W - 0.06, height: mH, depth: mD },
+      0, wly(fH + mH / 2), mZ,
+      0.93, 0.90, 0.84, 0.04, 0.04, 0.04);
+
+    // Piping strips around mattress perimeter (four thin darker bands)
+    const pip = 0.04;
+    [
+      { dims: { width: W - 0.06, height: mH, depth: pip }, lx: 0,              lz: mZ + mD / 2 - pip / 2 },
+      { dims: { width: W - 0.06, height: mH, depth: pip }, lx: 0,              lz: mZ - mD / 2 + pip / 2 },
+      { dims: { width: pip,      height: mH, depth: mD  }, lx: -(W - 0.06) / 2 + pip / 2, lz: mZ },
+      { dims: { width: pip,      height: mH, depth: mD  }, lx:  (W - 0.06) / 2 - pip / 2, lz: mZ },
+    ].forEach(({ dims, lx, lz }, i) => {
+      addBox(`bed_pip_${i}`, dims, lx, wly(fH + mH / 2), lz,
+        0.77, 0.74, 0.67, 0.03, 0.03, 0.03);
+    });
+
+    // ── Blanket/duvet (covers foot ~58 % of mattress) ────────────────────
+    const blH = 0.10;
+    const blD = mD * 0.58;
+    const blZ = mZ + mD / 2 - blD / 2;     // centres the blanket over the foot portion
+
+    addBox('bed_blanket', { width: W - 0.10, height: blH, depth: blD },
+      0, wly(mTop + blH / 2), blZ,
+      0.38, 0.48, 0.62, 0.05, 0.06, 0.08);
+
+    // Folded cuff at the head-side edge of the blanket (lighter, slightly raised)
+    const cuffH = 0.07;
+    addBox('bed_blanket_cuff', { width: W - 0.10, height: cuffH, depth: 0.16 },
+      0, wly(mTop + blH + cuffH / 2), blZ - blD / 2 + 0.08,
+      0.55, 0.62, 0.74, 0.06, 0.07, 0.09);
+
+    // ── Pillows ───────────────────────────────────────────────────────────
+    const plW = W / 2 - 0.12;
+    const plD = 0.44;
+    const plH = 0.10;
+    const plZ = mZ - mD / 2 + 0.05 + plD / 2;   // near the headboard end
+
+    [-W / 4 + 0.03, W / 4 - 0.03].forEach((plX, i) => {
+      addBox(`bed_pillow_${i}`, { width: plW, height: plH, depth: plD },
+        plX, wly(mTop + plH / 2), plZ,
+        0.97, 0.96, 0.92, 0.06, 0.06, 0.06);
+    });
+
+    // ── Drag behaviour on hitbox ─────────────────────────────────────────
+    const halfW = W / 2, halfD = D / 2;
+    const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
+    drag.moveAttached = false;
+    let grabX = 0, grabZ = 0;
+    drag.onDragStartObservable.add((ev) => {
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragObservable.add((ev) => {
+      const nx = Math.max(-5 + halfW, Math.min(5 - halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-5 + halfD, Math.min(5 - halfD, ev.dragPlanePoint.z + grabZ));
+      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+        hitbox.position.x = nx;
+        hitbox.position.z = nz;
+      }
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragEndObservable.add(() => updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z }));
+    hitbox.addBehavior(drag);
+  };
+
   // Items whose id matches a file in /public/models/ are loaded as GLB; everything else is a box
   const GLB_ITEMS = ["shelf"];
 
@@ -328,6 +505,8 @@ export default function App() {
       spawnWallBox(scene, item, pickResult);
     } else if (GLB_ITEMS.includes(item.id)) {
       spawnGLB(scene, item, px, pz);
+    } else if (item.id === "bed") {
+      spawnBed(scene, item, px, pz);
     } else {
       spawnBox(scene, item, px, pz);
     }
