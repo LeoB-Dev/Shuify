@@ -2,7 +2,7 @@ import { useRef } from "react";
 import BabylonCanvas from "./components/BabylonCanvas";
 import Sidebar from "./components/Sidebar";
 import useSceneStore from "./store/useSceneStore";
-import { MeshBuilder, PointerDragBehavior, Vector3, StandardMaterial, Color3 } from "@babylonjs/core";
+import { MeshBuilder, PointerDragBehavior, Vector3, StandardMaterial, Color3, PointerEventTypes } from "@babylonjs/core";
 // Module-level ImportMeshAsync is the Babylon 8.x replacement for the deprecated SceneLoader.ImportMeshAsync
 import { ImportMeshAsync } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF"; // registers the GLB/glTF plugin so ImportMeshAsync can handle .glb files
@@ -14,6 +14,8 @@ export default function App() {
   const draggingItemRef = useRef(null);
   // meshRegistryRef maps uid → mesh for every placed item so collision tests can check all of them
   const meshRegistryRef = useRef({});
+  // rotClampRef maps uid → { halfW, halfD } — mutable so right-click rotation can swap them
+  const rotClampRef = useRef({});
 
   // Tests whether moving `mesh` to (newX, newY, newZ) would cause it to overlap any other
   // registered mesh. Temporarily applies the candidate position, refreshes the world matrix
@@ -43,13 +45,15 @@ export default function App() {
   const spawnBox = (scene, item, px, pz) => {
     const { width, height, depth } = item.dimensions;
     const mesh = MeshBuilder.CreateBox(item.id, { width, height, depth }, scene);
-    // Position so the bottom of the box sits on the floor (y=0)
-    mesh.position.x = px;
+    // Position so the bottom of the box sits on the floor (y=0), clamped inside walls
+    mesh.position.x = Math.max(-4.90 + width / 2, Math.min(4.90 - width / 2, px));
     mesh.position.y = height / 2;
-    mesh.position.z = pz;
+    mesh.position.z = Math.max(-4.90 + depth / 2, Math.min(4.90 - depth / 2, pz));
     const uid = Date.now();
     addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
     meshRegistryRef.current[uid] = mesh;
+    const clamp = { halfW: width / 2, halfD: depth / 2 };
+    rotClampRef.current[uid] = clamp;
     // Constrain dragging to the horizontal ground plane
     const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
     // moveAttached=false + absolute dragPlanePoint avoids dead zones at walls and collisions.
@@ -61,8 +65,8 @@ export default function App() {
       grabOffsetZ = mesh.position.z - event.dragPlanePoint.z;
     });
     dragBehavior.onDragObservable.add((event) => {
-      const newX = Math.max(-5 + width / 2, Math.min(5 - width / 2, event.dragPlanePoint.x + grabOffsetX));
-      const newZ = Math.max(-5 + depth / 2, Math.min(5 - depth / 2, event.dragPlanePoint.z + grabOffsetZ));
+      const newX = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, event.dragPlanePoint.x + grabOffsetX));
+      const newZ = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, event.dragPlanePoint.z + grabOffsetZ));
       if (!testCollision(mesh, newX, mesh.position.y, newZ)) {
         mesh.position.x = newX;
         mesh.position.z = newZ;
@@ -129,11 +133,19 @@ export default function App() {
         depth: maxZ - minZ,
       }, scene);
       hitbox.visibility = 0;
-      hitbox.position.set(px, hitboxWorldY, pz);
+      // Centre the hitbox on the model's AABB centre (not the raw drop point).
+      // If the model origin isn't at its geometric centre, using px would misalign the
+      // hitbox and let geometry stick out past the clamped wall boundary.
+      const modelCenterX = (minX + maxX) / 2;
+      const modelCenterZ = (minZ + maxZ) / 2;
+      const hitboxX = Math.max(-4.90 + (maxX - minX) / 2, Math.min(4.90 - (maxX - minX) / 2, modelCenterX));
+      const hitboxZ = Math.max(-4.90 + (maxZ - minZ) / 2, Math.min(4.90 - (maxZ - minZ) / 2, modelCenterZ));
+      hitbox.position.set(hitboxX, hitboxWorldY, hitboxZ);
 
-      // Parent the model root to the hitbox so it moves atomically — no per-frame sync needed
+      // Parent the model root to the hitbox so it moves atomically — no per-frame sync needed.
+      // root.local keeps the model at its original world position (px, 0, pz).
       root.parent = hitbox;
-      root.position.set(0, floorY - hitboxWorldY, 0); // local offset within hitbox
+      root.position.set(px - hitboxX, floorY - hitboxWorldY, pz - hitboxZ);
 
       // Only the hitbox should receive pointer events — sub-meshes would intercept clicks
       result.meshes.forEach((m) => { m.isPickable = false; });
@@ -142,8 +154,8 @@ export default function App() {
       addPlacedItem({ uid, id: item.id, label: item.label, modelType: "glb", x: px, z: pz });
       meshRegistryRef.current[uid] = hitbox;
       // Constrain dragging to the ground plane, same as box items
-      const halfW = (maxX - minX) / 2;
-      const halfD = (maxZ - minZ) / 2;
+      const clamp = { halfW: (maxX - minX) / 2, halfD: (maxZ - minZ) / 2 };
+      rotClampRef.current[uid] = clamp;
       const dragBehavior = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
       dragBehavior.moveAttached = false;
       let grabOffsetX = 0, grabOffsetZ = 0;
@@ -152,8 +164,8 @@ export default function App() {
         grabOffsetZ = hitbox.position.z - event.dragPlanePoint.z;
       });
       dragBehavior.onDragObservable.add((event) => {
-        const newX = Math.max(-5 + halfW, Math.min(5 - halfW, event.dragPlanePoint.x + grabOffsetX));
-        const newZ = Math.max(-5 + halfD, Math.min(5 - halfD, event.dragPlanePoint.z + grabOffsetZ));
+        const newX = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, event.dragPlanePoint.x + grabOffsetX));
+        const newZ = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, event.dragPlanePoint.z + grabOffsetZ));
         if (!testCollision(hitbox, newX, hitbox.position.y, newZ)) {
           hitbox.position.x = newX;
           hitbox.position.z = newZ;
@@ -411,7 +423,7 @@ export default function App() {
         lens.position.set(0, H / 2 - 0.028, fz + 0.009);
         lens.isPickable = false;
         lens.material   = mkMat(`tv_lens_mat_${uid}`, 0.04, 0.04, 0.06, 0.30, 0.30, 0.35);
-
+        
         // Bottom bezel strip
         addBox(hitbox, `tv_bezel_bot_${uid}`, { width: W, height: 0.042, depth: D + 0.002 },
           0, -H / 2 + 0.021, 0,  0.05, 0.05, 0.07,  0.08, 0.08, 0.10);
@@ -553,7 +565,12 @@ export default function App() {
     const uid = Date.now();
     const hitbox = MeshBuilder.CreateBox(`bed_${uid}`, { width: W, height: hbH, depth: D }, scene);
     hitbox.visibility = 0;
-    hitbox.position.set(px, hbH / 2, pz);
+    // Clamp initial position: +0.03 accounts for headboard/footboard overhang beyond the hitbox
+    hitbox.position.set(
+      Math.max(-4.90 + W / 2 + 0.03, Math.min(4.90 - W / 2 - 0.03, px)),
+      hbH / 2,
+      Math.max(-4.90 + D / 2, Math.min(4.90 - D / 2, pz))
+    );
     meshRegistryRef.current[uid] = hitbox;
     addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
 
@@ -698,7 +715,9 @@ export default function App() {
     });
 
     // ── Drag behaviour on hitbox ─────────────────────────────────────────
-    const halfW = W / 2, halfD = D / 2;
+    // halfW includes the 0.03 m overhang of headboard/footboard beyond the hitbox
+    const clamp = { halfW: W / 2 + 0.03, halfD: D / 2 };
+    rotClampRef.current[uid] = clamp;
     const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
     drag.moveAttached = false;
     let grabX = 0, grabZ = 0;
@@ -707,8 +726,8 @@ export default function App() {
       grabZ = hitbox.position.z - ev.dragPlanePoint.z;
     });
     drag.onDragObservable.add((ev) => {
-      const nx = Math.max(-5 + halfW, Math.min(5 - halfW, ev.dragPlanePoint.x + grabX));
-      const nz = Math.max(-5 + halfD, Math.min(5 - halfD, ev.dragPlanePoint.z + grabZ));
+      const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
       if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
@@ -730,7 +749,12 @@ export default function App() {
     const uid = Date.now();
     const hitbox = MeshBuilder.CreateBox(`desk_${uid}`, { width: W, height: topH, depth: D }, scene);
     hitbox.visibility = 0;
-    hitbox.position.set(px, topH / 2, pz);
+    // Clamp initial position: +0.02 accounts for desktop slab overhang beyond the hitbox
+    hitbox.position.set(
+      Math.max(-4.90 + W / 2 + 0.02, Math.min(4.90 - W / 2 - 0.02, px)),
+      topH / 2,
+      Math.max(-4.90 + D / 2 + 0.02, Math.min(4.90 - D / 2 - 0.02, pz))
+    );
     meshRegistryRef.current[uid] = hitbox;
     addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
 
@@ -794,7 +818,9 @@ export default function App() {
     }
 
     // ── Drag behaviour ────────────────────────────────────────────────────
-    const halfW = W / 2, halfD = D / 2;
+    // halfW/halfD include the 0.02 m overhang of the desktop slab beyond the hitbox
+    const clamp = { halfW: W / 2 + 0.02, halfD: D / 2 + 0.02 };
+    rotClampRef.current[uid] = clamp;
     const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
     drag.moveAttached = false;
     let grabX = 0, grabZ = 0;
@@ -803,8 +829,8 @@ export default function App() {
       grabZ = hitbox.position.z - ev.dragPlanePoint.z;
     });
     drag.onDragObservable.add((ev) => {
-      const nx = Math.max(-5 + halfW, Math.min(5 - halfW, ev.dragPlanePoint.x + grabX));
-      const nz = Math.max(-5 + halfD, Math.min(5 - halfD, ev.dragPlanePoint.z + grabZ));
+      const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
       if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
@@ -829,7 +855,11 @@ export default function App() {
     const uid = Date.now();
     const hitbox = MeshBuilder.CreateBox(`chair_${uid}`, { width: W, height: hbH, depth: D }, scene);
     hitbox.visibility = 0;
-    hitbox.position.set(px, hbH / 2, pz);
+    hitbox.position.set(
+      Math.max(-4.90 + W / 2, Math.min(4.90 - W / 2, px)),
+      hbH / 2,
+      Math.max(-4.90 + D / 2, Math.min(4.90 - D / 2, pz))
+    );
     meshRegistryRef.current[uid] = hitbox;
     addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
 
@@ -890,7 +920,8 @@ export default function App() {
       0.22, 0.22, 0.25,  0.04, 0.04, 0.05);
 
     // ── Drag behaviour ────────────────────────────────────────────────────
-    const halfW = W / 2, halfD = D / 2;
+    const clamp = { halfW: W / 2, halfD: D / 2 };
+    rotClampRef.current[uid] = clamp;
     const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
     drag.moveAttached = false;
     let grabX = 0, grabZ = 0;
@@ -899,8 +930,126 @@ export default function App() {
       grabZ = hitbox.position.z - ev.dragPlanePoint.z;
     });
     drag.onDragObservable.add((ev) => {
-      const nx = Math.max(-5 + halfW, Math.min(5 - halfW, ev.dragPlanePoint.x + grabX));
-      const nz = Math.max(-5 + halfD, Math.min(5 - halfD, ev.dragPlanePoint.z + grabZ));
+      const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
+      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+        hitbox.position.x = nx;
+        hitbox.position.z = nz;
+      }
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragEndObservable.add(() => updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z }));
+    hitbox.addBehavior(drag);
+  };
+
+  // Spawns a 3-seater couch — dark wood legs/base/back panel, charcoal-blue fabric armrests,
+  // seat cushions, and back cushions.
+  const spawnCouch = (scene, item, px, pz) => {
+    const W        = 2.0;
+    const D        = 0.90;
+    const legH     = 0.14;
+    const legW     = 0.06;
+    const baseH    = 0.22;
+    const cushionH = 0.12;
+    const seatH    = legH + baseH + cushionH;  // 0.48
+    const armW     = 0.16;
+    const armH     = 0.64;
+    const backT    = 0.20;
+    const backTopY = 0.90;
+    const hbH      = backTopY;
+
+    const uid = Date.now();
+    const hitbox = MeshBuilder.CreateBox(`couch_${uid}`, { width: W, height: hbH, depth: D }, scene);
+    hitbox.visibility = 0;
+    hitbox.position.set(
+      Math.max(-4.90 + W / 2, Math.min(4.90 - W / 2, px)),
+      hbH / 2,
+      Math.max(-4.90 + D / 2, Math.min(4.90 - D / 2, pz))
+    );
+    meshRegistryRef.current[uid] = hitbox;
+    addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
+
+    const wly = (wy) => wy - hbH / 2;
+
+    const addBox = (name, dims, lx, ly, lz, r, g, b, sr = 0.05, sg = 0.05, sb = 0.06) => {
+      const m = MeshBuilder.CreateBox(name, dims, scene);
+      m.parent = hitbox;
+      m.position.set(lx, ly, lz);
+      m.isPickable = false;
+      const mat = new StandardMaterial(`${name}_mat`, scene);
+      mat.diffuseColor  = new Color3(r, g, b);
+      mat.specularColor = new Color3(sr, sg, sb);
+      m.material = mat;
+      return m;
+    };
+
+    // ── 4 short wooden legs ──────────────────────────────────────────────
+    const inset = 0.12;
+    [
+      [-(W / 2 - inset), -(D / 2 - inset)],
+      [ (W / 2 - inset), -(D / 2 - inset)],
+      [-(W / 2 - inset),  (D / 2 - inset)],
+      [ (W / 2 - inset),  (D / 2 - inset)],
+    ].forEach(([lx, lz], i) =>
+      addBox(`couch_leg_${i}_${uid}`, { width: legW, height: legH, depth: legW },
+        lx, wly(legH / 2), lz,
+        0.22, 0.15, 0.08));
+
+    // ── Solid base ────────────────────────────────────────────────────────
+    addBox(`couch_base_${uid}`, { width: W, height: baseH, depth: D },
+      0, wly(legH + baseH / 2), 0,
+      0.22, 0.15, 0.08);
+
+    // ── Back panel (structural dark wood) ─────────────────────────────────
+    const backPanelH = backTopY - legH;
+    const backZ      = D / 2 - backT / 2;
+    addBox(`couch_backpanel_${uid}`, { width: W, height: backPanelH, depth: backT },
+      0, wly(legH + backPanelH / 2), backZ,
+      0.22, 0.15, 0.08);
+
+    // ── 2 Armrests ────────────────────────────────────────────────────────
+    [-(W / 2 - armW / 2), (W / 2 - armW / 2)].forEach((ax, i) =>
+      addBox(`couch_arm_${i}_${uid}`, { width: armW, height: armH, depth: D },
+        ax, wly(armH / 2), 0,
+        0.28, 0.30, 0.36));
+
+    // ── 3 Seat cushions ───────────────────────────────────────────────────
+    const seatAreaW = W - 2 * armW;
+    const cW        = (seatAreaW - 0.06) / 3;
+    const cStep     = cW + 0.02;
+    const cx0       = -(seatAreaW / 2) + 0.01 + cW / 2;
+    const cD        = D - backT - 0.06;
+    const seatCZ    = -(backT - 0.01) / 2;
+    for (let i = 0; i < 3; i++) {
+      addBox(`couch_seatc_${i}_${uid}`, { width: cW - 0.02, height: cushionH, depth: cD },
+        cx0 + i * cStep, wly(legH + baseH + cushionH / 2), seatCZ,
+        0.28, 0.30, 0.36);
+    }
+
+    // ── 3 Back cushions ───────────────────────────────────────────────────
+    const bckD  = 0.10;
+    const bckH  = backTopY - seatH - 0.06;
+    const bckCZ = D / 2 - backT - bckD / 2;
+    for (let i = 0; i < 3; i++) {
+      addBox(`couch_backc_${i}_${uid}`, { width: cW - 0.02, height: bckH, depth: bckD },
+        cx0 + i * cStep, wly(seatH + 0.02 + bckH / 2), bckCZ,
+        0.32, 0.34, 0.40);
+    }
+
+    // ── Drag behaviour ────────────────────────────────────────────────────
+    const clamp = { halfW: W / 2, halfD: D / 2 };
+    rotClampRef.current[uid] = clamp;
+    const drag = new PointerDragBehavior({ dragPlaneNormal: new Vector3(0, 1, 0) });
+    drag.moveAttached = false;
+    let grabX = 0, grabZ = 0;
+    drag.onDragStartObservable.add((ev) => {
+      grabX = hitbox.position.x - ev.dragPlanePoint.x;
+      grabZ = hitbox.position.z - ev.dragPlanePoint.z;
+    });
+    drag.onDragObservable.add((ev) => {
+      const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
+      const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
       if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
@@ -1318,6 +1467,8 @@ export default function App() {
       spawnDesk(scene, item, px, pz);
     } else if (item.id === "chair") {
       spawnChair(scene, item, px, pz);
+    } else if (item.id === "couch") {
+      spawnCouch(scene, item, px, pz);
     } else {
       spawnBox(scene, item, px, pz);
     }
@@ -1331,9 +1482,31 @@ export default function App() {
         className="absolute top-0 right-0 bottom-44 left-0 md:bottom-0 md:left-64"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
+        onContextMenu={(e) => e.preventDefault()}
       >
         <BabylonCanvas onSceneReady={(scene) => {
           sceneRef.current = scene;
+          // Right-click any floor item to rotate it 90° around Y.
+          // Wall items are excluded (they have no entry in rotClampRef).
+          scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type !== PointerEventTypes.POINTERDOWN) return;
+            if (pointerInfo.event.button !== 2) return;
+            const pick = pointerInfo.pickInfo;
+            if (!pick.hit || !pick.pickedMesh) return;
+            const uid = Object.keys(meshRegistryRef.current).find(
+              (k) => meshRegistryRef.current[k] === pick.pickedMesh
+            );
+            if (!uid) return;
+            const clamp = rotClampRef.current[uid];
+            if (!clamp) return;
+            const mesh = meshRegistryRef.current[uid];
+            mesh.rotation.y += Math.PI / 2;
+            // Swap half-extents so drag boundary clamping stays correct after rotation
+            const hw = clamp.halfW;
+            clamp.halfW = clamp.halfD;
+            clamp.halfD = hw;
+            updateItem(Number(uid), { rotation: mesh.rotation.y });
+          });
         }} />
       </div>
     </div>

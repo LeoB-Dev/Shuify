@@ -4,6 +4,7 @@ import {
     BedDouble,
     Laptop,
     Armchair,
+    Sofa,
     AppWindow,
     DoorOpen,
 } from "lucide-react";
@@ -45,6 +46,13 @@ const FURNITURE_ITEMS = [
         description: "Desk chair with cushion",
         icon: Armchair,
         dimensions: { width: 0.58, height: 0.88, depth: 0.55 },
+    },
+    {
+        id: "couch",
+        label: "Couch",
+        description: "3-seater fabric sofa",
+        icon: Sofa,
+        dimensions: { width: 2.0, height: 0.90, depth: 0.90 },
     },
     {
         id: "window",
@@ -145,7 +153,7 @@ export default function Sidebar() {
                         )}
                     </div>
                     <div className="px-5 py-4 border-t border-[#2e2e2e]">
-                        <p className="text-[10px] text-[#444]">Drag items into the room</p>
+                        <p className="text-[10px] text-[#444]">Drag to place &nbsp;·&nbsp; Right-click to rotate</p>
                     </div>
                 </div>
             </aside>

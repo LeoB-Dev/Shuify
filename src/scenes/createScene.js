@@ -59,51 +59,10 @@ export function createScene(engine, canvas) {
     wallMat.diffuseTexture.vScale       = 3;
     wallMat.specularColor               = new Color3(0.03, 0.03, 0.03);
 
-    // --- FLOOR TEXTURE — wood planks running front-to-back ---
-    // Ground UV: U = X (left-right), V = Z (front-back).
-    // Vertical stripes in the texture = planks running front-to-back in the scene.
-    // Use 4 planks at exactly 128 px each (512 / 4 = 128, no fractional pixels).
-    // Fill the entire canvas first so no black gaps can appear.
-    const floorTex = new DynamicTexture("floorTex", { width: 512, height: 512 }, scene, false);
-    const fCtx = floorTex.getContext();
-
-    // Solid base fill — canvas starts transparent/black without this
-    fCtx.fillStyle = "#b8956a";
-    fCtx.fillRect(0, 0, 512, 512);
-
-    const plankColors = ["#bf9b6e", "#b39062", "#c8a47a", "#b69570"];
-    for (let col = 0; col < 4; col++) {
-        const px = col * 128;
-        // Plank face (slightly different shade per plank)
-        fCtx.fillStyle = plankColors[col];
-        fCtx.fillRect(px, 0, 126, 512);
-        // Subtle lengthwise grain lines
-        for (let g = 0; g < 6; g++) {
-            const gy = Math.random() * 512;
-            fCtx.strokeStyle = "rgba(65,40,15,0.07)";
-            fCtx.lineWidth = 1;
-            fCtx.beginPath();
-            fCtx.moveTo(px, gy);
-            fCtx.lineTo(px + 126, gy + (Math.random() * 14 - 7));
-            fCtx.stroke();
-        }
-        // Narrow side gap
-        fCtx.fillStyle = "rgba(55,33,12,0.22)";
-        fCtx.fillRect(px + 126, 0, 2, 512);
-        // Staggered end seam
-        const seamV = (col % 2 === 0) ? 256 : 128;
-        fCtx.fillStyle = "rgba(55,33,12,0.15)";
-        fCtx.fillRect(px, seamV,       126, 2);
-        fCtx.fillRect(px, seamV + 256, 126, 2);
-    }
-    floorTex.update();
-
     const ground = MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
     const floorMat = new StandardMaterial("floorMat", scene);
-    floorMat.diffuseTexture        = floorTex;
-    floorMat.diffuseTexture.uScale = 4;  // 4 repeats × 4 planks = 16 planks across room
-    floorMat.diffuseTexture.vScale = 1;  // planks run full depth of room
-    floorMat.specularColor         = new Color3(0.12, 0.10, 0.07);
+    floorMat.diffuseColor  = new Color3(0.55, 0.27, 0.07); // solid brown
+    floorMat.specularColor = new Color3(0.05, 0.03, 0.02);
     ground.material = floorMat;
 
     // --- WALLS ---
