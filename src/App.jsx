@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import BabylonCanvas from "./components/BabylonCanvas";
 import Sidebar from "./components/Sidebar";
 import useSceneStore from "./store/useSceneStore";
@@ -16,6 +16,9 @@ export default function App() {
   const meshRegistryRef = useRef({});
   // rotClampRef maps uid → { halfW, halfD } — mutable so right-click rotation can swap them
   const rotClampRef = useRef({});
+  // Monotonic counter for unique item uids — avoids Date.now() collisions when multiple items
+  // are spawned synchronously in the same millisecond (e.g. during room reload).
+  const uidCounter = useRef(1);
 
   // Tests whether moving `mesh` to (newX, newY, newZ) would cause it to overlap any other
   // registered mesh. Temporarily applies the candidate position, refreshes the world matrix
@@ -32,11 +35,45 @@ export default function App() {
     mesh.computeWorldMatrix(true);
     return collides;
   };
+
+  // Returns true if the mesh can move to (newX, newY, newZ).
+  // If the mesh is already overlapping something at its current position (stuck), any move is
+  // allowed so it can escape. Otherwise, only moves that don't create a new collision are allowed.
+  const canMoveTo = (mesh, newX, newY, newZ) => {
+    if (testCollision(mesh, mesh.position.x, mesh.position.y, mesh.position.z)) return true;
+    return !testCollision(mesh, newX, newY, newZ);
+  };
+  const [hintVisible, setHintVisible] = useState(true);
+
   const draggingItem = useSceneStore((s) => s.draggingItem);
+  const placedItems = useSceneStore((s) => s.placedItems);
   const addPlacedItem = useSceneStore((s) => s.addPlacedItem);
   const updateItem = useSceneStore((s) => s.updateItem);
+  const removeItem = useSceneStore((s) => s.removeItem);
+  const clearPlacedItems = useSceneStore((s) => s.clearPlacedItems);
+  const pendingLoad = useSceneStore((s) => s.pendingLoad);
+  const clearPendingLoad = useSceneStore((s) => s.clearPendingLoad);
+  const pendingDeleteUid = useSceneStore((s) => s.pendingDeleteUid);
+  const clearPendingDelete = useSceneStore((s) => s.clearPendingDelete);
 
   draggingItemRef.current = draggingItem;
+
+  // Dimensions for every item type, used when rebuilding catalogItem during room reload.
+  // Wall-item spawners (tv, window, door) and spawnBox require item.dimensions at runtime.
+  // Floor-item spawners (bed, desk, chair, couch) hardcode their own dims but entries are
+  // included here so any future spawnBox fallback has correct data.
+  // GLB spawners (shelf) derive dims from the model AABB and ignore item.dimensions,
+  // but the entry is included to avoid undefined for any code that inspects catalogItem.
+  const ITEM_DIMS = {
+    tv:     { width: 1.6, height: 0.9,  depth: 0.05 },
+    window: { width: 1.4, height: 1.2,  depth: 0.12 },
+    door:   { width: 1.4, height: 3.2,  depth: 0.12 },
+    shelf:  { width: 2.0, height: 0.2,  depth: 0.30 },
+    bed:    { width: 2.8, height: 1.05, depth: 4.0  },
+    desk:   { width: 2.2, height: 0.76, depth: 1.0  },
+    chair:  { width: 0.58, height: 0.88, depth: 0.55 },
+    couch:  { width: 2.0, height: 0.90, depth: 0.90 },
+  };
 
   // Allows the dragged sidebar element to be dropped onto the canvas
   const handleDragOver = (e) => e.preventDefault();
@@ -49,7 +86,7 @@ export default function App() {
     mesh.position.x = Math.max(-4.90 + width / 2, Math.min(4.90 - width / 2, px));
     mesh.position.y = height / 2;
     mesh.position.z = Math.max(-4.90 + depth / 2, Math.min(4.90 - depth / 2, pz));
-    const uid = Date.now();
+    const uid = uidCounter.current++;
     addPlacedItem({ uid, id: item.id, label: item.label, modelType: "box", x: px, z: pz });
     meshRegistryRef.current[uid] = mesh;
     const clamp = { halfW: width / 2, halfD: depth / 2 };
@@ -67,7 +104,7 @@ export default function App() {
     dragBehavior.onDragObservable.add((event) => {
       const newX = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, event.dragPlanePoint.x + grabOffsetX));
       const newZ = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, event.dragPlanePoint.z + grabOffsetZ));
-      if (!testCollision(mesh, newX, mesh.position.y, newZ)) {
+      if (canMoveTo(mesh, newX, mesh.position.y, newZ)) {
         mesh.position.x = newX;
         mesh.position.z = newZ;
       }
@@ -84,7 +121,7 @@ export default function App() {
   const spawnGLB = async (scene, item, px, pz) => {
     try {
       // Load the GLB from /public/models/<id>.glb
-      const result = await ImportMeshAsync(`/models/${item.id}.glb`, scene);
+      const result = await ImportMeshAsync(`${import.meta.env.BASE_URL}models/${item.id}.glb`, scene);
 
       // Walk up the parent chain from the first geometry mesh to find the true scene root
       // (the topmost ancestor with no parent). This is more reliable than searching
@@ -92,32 +129,48 @@ export default function App() {
       let root = result.meshes[0];
       while (root.parent) root = root.parent;
 
-      // Fix orientation: -PI/2 on X converts the model from Z-up (model space) to Y-up (world),
-      // -PI/2 on Y rotates it to face the open wall (+Z direction)
-      root.rotation = new Vector3(-Math.PI / 2, -Math.PI / 2, 0);
+      // Per-model rotation override (e.g. Y-up glTF models don't need the Z-up X correction).
+      // Items can supply glbRotation: [x, y, z]; default assumes Z-up source.
+      const [rx, ry, rz] = item.glbRotation ?? [-Math.PI / 2, -Math.PI / 2, 0];
+      root.rotation = new Vector3(rx, ry, rz);
       root.position.set(px, 0, pz);
 
       // Force every mesh's world matrix to update with the new root orientation
       result.meshes.forEach((m) => m.computeWorldMatrix(true));
 
+      // Helper: compute world AABB over all meshes
+      const computeAABB = () => {
+        let minY = Infinity, maxY = -Infinity;
+        let minX = Infinity, maxX = -Infinity;
+        let minZ = Infinity, maxZ = -Infinity;
+        result.meshes.forEach((m) => {
+          const bi = m.getBoundingInfo();
+          if (!bi) return;
+          const wMin = bi.boundingBox.minimumWorld;
+          const wMax = bi.boundingBox.maximumWorld;
+          if (wMin.y < minY) minY = wMin.y;
+          if (wMax.y > maxY) maxY = wMax.y;
+          if (wMin.x < minX) minX = wMin.x;
+          if (wMax.x > maxX) maxX = wMax.x;
+          if (wMin.z < minZ) minZ = wMin.z;
+          if (wMax.z > maxZ) maxZ = wMax.z;
+        });
+        return { minX, maxX, minY, maxY, minZ, maxZ };
+      };
+
       // Compute the world AABB by iterating every visual mesh individually.
       // This is safer than getHierarchyBoundingVectors() which can miss meshes
       // if result.meshes[0] isn't actually the hierarchy root.
-      let minY = Infinity, maxY = -Infinity;
-      let minX = Infinity, maxX = -Infinity;
-      let minZ = Infinity, maxZ = -Infinity;
-      result.meshes.forEach((m) => {
-        const bi = m.getBoundingInfo();
-        if (!bi) return;
-        const wMin = bi.boundingBox.minimumWorld;
-        const wMax = bi.boundingBox.maximumWorld;
-        if (wMin.y < minY) minY = wMin.y;
-        if (wMax.y > maxY) maxY = wMax.y;
-        if (wMin.x < minX) minX = wMin.x;
-        if (wMax.x > maxX) maxX = wMax.x;
-        if (wMin.z < minZ) minZ = wMin.z;
-        if (wMax.z > maxZ) maxZ = wMax.z;
-      });
+      let { minX, maxX, minY, maxY, minZ, maxZ } = computeAABB();
+
+      // Auto-scale: if item.dimensions.width is specified, uniformly scale the model
+      // so its world-space width matches. This handles models exported in cm/mm.
+      if (item.dimensions?.width && (maxX - minX) > 0) {
+        const sf = item.dimensions.width / (maxX - minX);
+        root.scaling = new Vector3(sf, sf, sf);
+        result.meshes.forEach((m) => m.computeWorldMatrix(true));
+        ({ minX, maxX, minY, maxY, minZ, maxZ } = computeAABB());
+      }
 
       const modelHeight = maxY - minY;
       // Lift so model bottom sits just above the floor. A tiny positive offset (0.002)
@@ -150,7 +203,7 @@ export default function App() {
       // Only the hitbox should receive pointer events — sub-meshes would intercept clicks
       result.meshes.forEach((m) => { m.isPickable = false; });
 
-      const uid = Date.now();
+      const uid = uidCounter.current++;
       addPlacedItem({ uid, id: item.id, label: item.label, modelType: "glb", x: px, z: pz });
       meshRegistryRef.current[uid] = hitbox;
       // Constrain dragging to the ground plane, same as box items
@@ -166,7 +219,7 @@ export default function App() {
       dragBehavior.onDragObservable.add((event) => {
         const newX = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, event.dragPlanePoint.x + grabOffsetX));
         const newZ = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, event.dragPlanePoint.z + grabOffsetZ));
-        if (!testCollision(hitbox, newX, hitbox.position.y, newZ)) {
+        if (canMoveTo(hitbox, newX, hitbox.position.y, newZ)) {
           hitbox.position.x = newX;
           hitbox.position.z = newZ;
           // root follows hitbox automatically via parenting — no manual sync
@@ -206,7 +259,7 @@ export default function App() {
     // Use pick-point height, clamped to valid range; fall back to 2.0 if dropped on the floor
     const spawnY = Math.max(height / 2, Math.min(5 - height / 2, pt.y > height / 2 ? pt.y : 2.0));
 
-    const uid = Date.now();
+    const uid = uidCounter.current++;
 
     // Shared material — created once and reused when the mesh is rebuilt on a new wall
     const mat = new StandardMaterial(`${item.id}_mat_${uid}`, scene);
@@ -234,7 +287,7 @@ export default function App() {
         lockFn = (event) => {
           const newX = Math.max(-5 + width / 2, Math.min(5 - width / 2, event.dragPlanePoint.x + grabOffsetA));
           const newY = Math.max(height / 2, Math.min(5 - height / 2, event.dragPlanePoint.y + grabOffsetY));
-          if (!testCollision(mesh, newX, newY, wallZ)) {
+          if (canMoveTo(mesh, newX, newY, wallZ)) {
             mesh.position.x = newX;
             mesh.position.y = newY;
           }
@@ -255,7 +308,7 @@ export default function App() {
         lockFn = (event) => {
           const newZ = Math.max(-5 + width / 2, Math.min(5 - width / 2, event.dragPlanePoint.z + grabOffsetA));
           const newY = Math.max(height / 2, Math.min(5 - height / 2, event.dragPlanePoint.y + grabOffsetY));
-          if (!testCollision(mesh, wallX, newY, newZ)) {
+          if (canMoveTo(mesh, wallX, newY, newZ)) {
             mesh.position.z = newZ;
             mesh.position.y = newY;
           }
@@ -303,8 +356,12 @@ export default function App() {
         }
 
         if (nextWall) buildOnWall(nextWall, x, z, y);
-        // Persist full wall-item state: position on the current wall + which wall it's on
-        updateItem(uid, { x, z, y, wall: nextWall ?? wall });
+        // Read final position from activeMesh (the live mesh after any wall snap) so the
+        // saved coordinates reflect where the item actually landed, not the pre-snap position.
+        updateItem(uid, {
+          x: activeMesh.position.x, z: activeMesh.position.z, y: activeMesh.position.y,
+          wall: nextWall ?? wall,
+        });
       });
 
       mesh.addBehavior(dragBehavior);
@@ -338,7 +395,7 @@ export default function App() {
     }
 
     const spawnY = Math.max(H / 2, Math.min(5 - H / 2, pt.y > H / 2 ? pt.y : 2.0));
-    const uid    = Date.now();
+    const uid    = uidCounter.current++;
 
     let activeHitbox = null;
     let placed       = false;
@@ -380,7 +437,7 @@ export default function App() {
         lockFn = (ev) => {
           const newX = Math.max(-5 + W / 2, Math.min(5 - W / 2, ev.dragPlanePoint.x + grabOffsetA));
           const newY = Math.max(H / 2, Math.min(5 - H / 2, ev.dragPlanePoint.y + grabOffsetY));
-          if (!testCollision(hitbox, newX, newY, wallZ)) {
+          if (canMoveTo(hitbox, newX, newY, wallZ)) {
             hitbox.position.x = newX;
             hitbox.position.y = newY;
           }
@@ -455,7 +512,7 @@ export default function App() {
         lockFn = (ev) => {
           const newZ = Math.max(-5 + W / 2, Math.min(5 - W / 2, ev.dragPlanePoint.z + grabOffsetA));
           const newY = Math.max(H / 2, Math.min(5 - H / 2, ev.dragPlanePoint.y + grabOffsetY));
-          if (!testCollision(hitbox, wallX, newY, newZ)) {
+          if (canMoveTo(hitbox, wallX, newY, newZ)) {
             hitbox.position.z = newZ;
             hitbox.position.y = newY;
           }
@@ -547,7 +604,10 @@ export default function App() {
           if (z < -2.5) nextWall = "back";
         }
         if (nextWall) buildOnWall(nextWall, x, z, y);
-        updateItem(uid, { x, z, y, wall: nextWall ?? wall });
+        updateItem(uid, {
+          x: activeHitbox.position.x, z: activeHitbox.position.z, y: activeHitbox.position.y,
+          wall: nextWall ?? wall,
+        });
       });
       hitbox.addBehavior(dragBehavior);
     };
@@ -562,7 +622,7 @@ export default function App() {
     const D   = 4.0;    // overall depth  (Z)
     const hbH = 1.05;   // headboard height = bounding-box height
 
-    const uid = Date.now();
+    const uid = uidCounter.current++;
     const hitbox = MeshBuilder.CreateBox(`bed_${uid}`, { width: W, height: hbH, depth: D }, scene);
     hitbox.visibility = 0;
     // Clamp initial position: +0.03 accounts for headboard/footboard overhang beyond the hitbox
@@ -728,7 +788,7 @@ export default function App() {
     drag.onDragObservable.add((ev) => {
       const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
       const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
-      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+      if (canMoveTo(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
       }
@@ -746,7 +806,7 @@ export default function App() {
     const topH  = 0.76;   // desk surface height = hitbox height
     const slabT = 0.05;   // desktop slab thickness
 
-    const uid = Date.now();
+    const uid = uidCounter.current++;
     const hitbox = MeshBuilder.CreateBox(`desk_${uid}`, { width: W, height: topH, depth: D }, scene);
     hitbox.visibility = 0;
     // Clamp initial position: +0.02 accounts for desktop slab overhang beyond the hitbox
@@ -831,7 +891,7 @@ export default function App() {
     drag.onDragObservable.add((ev) => {
       const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
       const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
-      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+      if (canMoveTo(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
       }
@@ -852,7 +912,7 @@ export default function App() {
     const backH = 0.42;   // backrest height above seat
     const hbH   = seatH + backH;   // hitbox height = 0.88
 
-    const uid = Date.now();
+    const uid = uidCounter.current++;
     const hitbox = MeshBuilder.CreateBox(`chair_${uid}`, { width: W, height: hbH, depth: D }, scene);
     hitbox.visibility = 0;
     hitbox.position.set(
@@ -932,7 +992,7 @@ export default function App() {
     drag.onDragObservable.add((ev) => {
       const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
       const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
-      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+      if (canMoveTo(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
       }
@@ -959,7 +1019,7 @@ export default function App() {
     const backTopY = 0.90;
     const hbH      = backTopY;
 
-    const uid = Date.now();
+    const uid = uidCounter.current++;
     const hitbox = MeshBuilder.CreateBox(`couch_${uid}`, { width: W, height: hbH, depth: D }, scene);
     hitbox.visibility = 0;
     hitbox.position.set(
@@ -1050,7 +1110,7 @@ export default function App() {
     drag.onDragObservable.add((ev) => {
       const nx = Math.max(-4.90 + clamp.halfW, Math.min(4.90 - clamp.halfW, ev.dragPlanePoint.x + grabX));
       const nz = Math.max(-4.90 + clamp.halfD, Math.min(4.90 - clamp.halfD, ev.dragPlanePoint.z + grabZ));
-      if (!testCollision(hitbox, nx, hitbox.position.y, nz)) {
+      if (canMoveTo(hitbox, nx, hitbox.position.y, nz)) {
         hitbox.position.x = nx;
         hitbox.position.z = nz;
       }
@@ -1086,7 +1146,7 @@ export default function App() {
     }
 
     const spawnY = Math.max(H / 2, Math.min(5 - H / 2, pt.y > H / 2 ? pt.y : 2.2));
-    const uid    = Date.now();
+    const uid    = uidCounter.current++;
 
     let activeHitbox = null;
     let placed       = false;
@@ -1160,7 +1220,7 @@ export default function App() {
         lockFn = (ev) => {
           const newX = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.x + grabOffsetA));
           const newY = Math.max(H/2, Math.min(5 - H/2, ev.dragPlanePoint.y + grabOffsetY));
-          if (!testCollision(hitbox, newX, newY, wallZ)) { hitbox.position.x = newX; hitbox.position.y = newY; }
+          if (canMoveTo(hitbox, newX, newY, wallZ)) { hitbox.position.x = newX; hitbox.position.y = newY; }
           grabOffsetA = hitbox.position.x - ev.dragPlanePoint.x;
           grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
           hitbox.position.z = wallZ;
@@ -1174,7 +1234,7 @@ export default function App() {
         lockFn = (ev) => {
           const newZ = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.z + grabOffsetA));
           const newY = Math.max(H/2, Math.min(5 - H/2, ev.dragPlanePoint.y + grabOffsetY));
-          if (!testCollision(hitbox, wallX, newY, newZ)) { hitbox.position.z = newZ; hitbox.position.y = newY; }
+          if (canMoveTo(hitbox, wallX, newY, newZ)) { hitbox.position.z = newZ; hitbox.position.y = newY; }
           grabOffsetA = hitbox.position.z - ev.dragPlanePoint.z;
           grabOffsetY = hitbox.position.y - ev.dragPlanePoint.y;
           hitbox.position.x = wallX;
@@ -1212,7 +1272,10 @@ export default function App() {
           if (z < -2.5) nextWall = "back";
         }
         if (nextWall) buildOnWall(nextWall, x, z, y);
-        updateItem(uid, { x, z, y, wall: nextWall ?? wall });
+        updateItem(uid, {
+          x: activeHitbox.position.x, z: activeHitbox.position.z, y: activeHitbox.position.y,
+          wall: nextWall ?? wall,
+        });
       });
       hitbox.addBehavior(dragBehavior);
     };
@@ -1246,7 +1309,7 @@ export default function App() {
 
     // Door always sits on the floor
     const spawnY = H / 2;
-    const uid    = Date.now();
+    const uid    = uidCounter.current++;
 
     let activeHitbox = null;
     let placed       = false;
@@ -1372,7 +1435,7 @@ export default function App() {
         dragNormal = new Vector3(0, 0, 1);
         lockFn = (ev) => {
           const newX = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.x + grabOffsetA));
-          if (!testCollision(hitbox, newX, spawnY, wallZ)) hitbox.position.x = newX;
+          if (canMoveTo(hitbox, newX, spawnY, wallZ)) hitbox.position.x = newX;
           grabOffsetA = hitbox.position.x - ev.dragPlanePoint.x;
           hitbox.position.set(hitbox.position.x, spawnY, wallZ);
         };
@@ -1384,7 +1447,7 @@ export default function App() {
         dragNormal = wall === "left" ? new Vector3(1, 0, 0) : new Vector3(-1, 0, 0);
         lockFn = (ev) => {
           const newZ = Math.max(-5 + W/2, Math.min(5 - W/2, ev.dragPlanePoint.z + grabOffsetA));
-          if (!testCollision(hitbox, wallX, spawnY, newZ)) hitbox.position.z = newZ;
+          if (canMoveTo(hitbox, wallX, spawnY, newZ)) hitbox.position.z = newZ;
           grabOffsetA = hitbox.position.z - ev.dragPlanePoint.z;
           hitbox.position.set(wallX, spawnY, hitbox.position.z);
         };
@@ -1420,7 +1483,7 @@ export default function App() {
           if (z < -2.5) nextWall = "back";
         }
         if (nextWall) buildOnWall(nextWall, x, z);
-        updateItem(uid, { x: hitbox.position.x, z: hitbox.position.z, y: spawnY, wall: nextWall ?? wall });
+        updateItem(uid, { x: activeHitbox.position.x, z: activeHitbox.position.z, y: spawnY, wall: nextWall ?? wall });
       });
       hitbox.addBehavior(dragBehavior);
     };
@@ -1429,7 +1492,7 @@ export default function App() {
   };
 
   // Items whose id matches a file in /public/models/ are loaded as GLB; everything else is a box
-  const GLB_ITEMS = ["shelf"];
+  const GLB_ITEMS = ["shelf", "tripo-sofa", "eames-chair"];
 
   // On drop, ray-cast into the scene to find the floor point under the cursor,
   // then spawn the dragged item at that world position
@@ -1474,6 +1537,92 @@ export default function App() {
     }
   };
 
+  // ── Room loader ──────────────────────────────────────────────────────────
+  // When loadRoom() sets pendingLoad, dispose every current mesh, wipe the
+  // registries, clear placedItems, then re-spawn each saved item in order.
+  // GLB spawns are async so we process items sequentially with an async loop.
+  useEffect(() => {
+    if (!pendingLoad || !sceneRef.current) return;
+
+    const scene = sceneRef.current;
+
+    // Dispose all existing meshes (children are disposed recursively)
+    Object.values(meshRegistryRef.current).forEach((m) => m.dispose());
+    meshRegistryRef.current = {};
+    rotClampRef.current = {};
+    clearPlacedItems();
+    clearPendingLoad();
+
+    // Build a fake pickResult for wall items from saved position + wall name
+    const makeWallPickResult = (saved) => ({
+      pickedPoint: { x: saved.x, y: saved.y ?? 0, z: saved.z },
+      pickedMesh:  { name: { back: "wallBack", left: "wallLeft", right: "wallRight" }[saved.wall] ?? "wallBack" },
+    });
+
+    // Re-spawn one saved item and apply its rotation once the mesh exists
+    const respawnItem = async (saved) => {
+      const beforeKeys = new Set(Object.keys(meshRegistryRef.current));
+
+      const catalogItem = {
+        id:         saved.id,
+        label:      saved.label,
+        dimensions: ITEM_DIMS[saved.id],
+        mountType:  saved.modelType === "wall" ? "wall" : undefined,
+      };
+
+      if      (saved.id === "tv")                  spawnTV(scene, catalogItem, makeWallPickResult(saved));
+      else if (saved.id === "window")              spawnWindow(scene, catalogItem, makeWallPickResult(saved));
+      else if (saved.id === "door")                spawnDoor(scene, catalogItem, makeWallPickResult(saved));
+      else if (saved.id === "bed")                 spawnBed(scene, catalogItem, saved.x, saved.z);
+      else if (saved.id === "desk")                spawnDesk(scene, catalogItem, saved.x, saved.z);
+      else if (saved.id === "chair")               spawnChair(scene, catalogItem, saved.x, saved.z);
+      else if (saved.id === "couch")               spawnCouch(scene, catalogItem, saved.x, saved.z);
+      else if (GLB_ITEMS.includes(saved.id))       await spawnGLB(scene, catalogItem, saved.x, saved.z);
+      else                                         spawnBox(scene, catalogItem, saved.x, saved.z);
+
+      // Apply saved rotation to the newly registered hitbox (floor items only)
+      if (saved.rotation) {
+        const newKey = Object.keys(meshRegistryRef.current).find((k) => !beforeKeys.has(k));
+        if (newKey) {
+          const mesh = meshRegistryRef.current[newKey];
+          mesh.rotation.y = saved.rotation;
+          // Sync clamp half-extents: odd number of 90° steps means W↔D are swapped
+          const clamp = rotClampRef.current[newKey];
+          if (clamp) {
+            const steps = Math.round(saved.rotation / (Math.PI / 2)) % 4;
+            if (Math.abs(steps) % 2 !== 0) [clamp.halfW, clamp.halfD] = [clamp.halfD, clamp.halfW];
+          }
+        }
+      }
+    };
+
+    (async () => {
+      for (const saved of pendingLoad) await respawnItem(saved);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingLoad]);
+
+  // ── Item deleter ─────────────────────────────────────────────────────────
+  // When the Sidebar sets pendingDeleteUid, dispose the mesh (and its children),
+  // remove it from both registries, then update the store.
+  useEffect(() => {
+    if (pendingDeleteUid === null) return;
+    const mesh = meshRegistryRef.current[pendingDeleteUid];
+    if (mesh) {
+      mesh.dispose(); // disposes children recursively by default
+      delete meshRegistryRef.current[pendingDeleteUid];
+      delete rotClampRef.current[pendingDeleteUid];
+    }
+    removeItem(pendingDeleteUid);
+    clearPendingDelete();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingDeleteUid]);
+
+  // Fade out the hint as soon as the first item is placed
+  useEffect(() => {
+    if (placedItems.length > 0) setHintVisible(false);
+  }, [placedItems.length]);
+
   return (
     <div className="w-screen h-screen bg-black relative overflow-hidden">
       <Sidebar />
@@ -1484,6 +1633,17 @@ export default function App() {
         onDrop={handleDrop}
         onContextMenu={(e) => e.preventDefault()}
       >
+        {/* Controls hint — fades out after first item is placed */}
+        <div
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-opacity duration-700"
+          style={{ opacity: hintVisible ? 1 : 0 }}
+        >
+          <div className="bg-black/55 backdrop-blur-sm text-white/75 text-xs font-medium px-5 py-2.5 rounded-full flex items-center gap-3 border border-white/10 whitespace-nowrap">
+            <span>⠿ Drag furniture to place</span>
+            <span className="text-white/25">·</span>
+            <span>Right-click to rotate</span>
+          </div>
+        </div>
         <BabylonCanvas onSceneReady={(scene) => {
           sceneRef.current = scene;
           // Right-click any floor item to rotate it 90° around Y.

@@ -25,8 +25,8 @@ export function createScene(engine, canvas) {
     // Vertical surfaces receive the midpoint between skyColor and groundColor,
     // so both need to be light to avoid dark walls.
     const ambient = new HemisphericLight("ambient", new Vector3(0, 1, 0), scene);
-    ambient.intensity   = 1.0;
-    ambient.diffuse     = new Color3(1.00, 0.97, 0.93); // warm white sky
+    ambient.intensity = 1.0;
+    ambient.diffuse = new Color3(1.00, 0.97, 0.93); // warm white sky
     ambient.groundColor = new Color3(0.88, 0.84, 0.78); // warm ground bounce (nearly as bright as sky)
 
     // Directional light coming from the front-right-above (+X, +Y, +Z → toward room interior).
@@ -36,7 +36,7 @@ export function createScene(engine, canvas) {
     //   right wall inner face normal -X → dot with -0.5 → no direct contribution (darker)
     const sun = new DirectionalLight("sun", new Vector3(-0.5, -1.0, -0.4), scene);
     sun.intensity = 0.22;
-    sun.diffuse   = new Color3(1.00, 0.96, 0.88);
+    sun.diffuse = new Color3(1.00, 0.96, 0.88);
 
     // --- WALL TEXTURE — plaster grain via canvas noise ---
     const wallTex = new DynamicTexture("wallTex", { width: 512, height: 512 }, scene, false);
@@ -44,9 +44,9 @@ export function createScene(engine, canvas) {
     wCtx.fillStyle = "#ecdfd0";          // warm beige base
     wCtx.fillRect(0, 0, 512, 512);
     for (let i = 0; i < 6000; i++) {
-        const x    = Math.random() * 512;
-        const y    = Math.random() * 512;
-        const v    = Math.floor(Math.random() * 20 - 10);
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const v = Math.floor(Math.random() * 20 - 10);
         const size = Math.random() < 0.2 ? 3 : 2;
         wCtx.fillStyle = `rgb(${236 + v},${223 + v},${208 + v})`;
         wCtx.fillRect(x, y, size, size);
@@ -54,14 +54,14 @@ export function createScene(engine, canvas) {
     wallTex.update();
 
     const wallMat = new StandardMaterial("wallMat", scene);
-    wallMat.diffuseTexture              = wallTex;
-    wallMat.diffuseTexture.uScale       = 3;
-    wallMat.diffuseTexture.vScale       = 3;
-    wallMat.specularColor               = new Color3(0.03, 0.03, 0.03);
+    wallMat.diffuseTexture = wallTex;
+    wallMat.diffuseTexture.uScale = 3;
+    wallMat.diffuseTexture.vScale = 3;
+    wallMat.specularColor = new Color3(0.03, 0.03, 0.03);
 
     const ground = MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
     const floorMat = new StandardMaterial("floorMat", scene);
-    floorMat.diffuseColor  = new Color3(0.55, 0.27, 0.07); // solid brown
+    floorMat.diffuseColor = new Color3(0.35, 0.17, 0.04); // solid brown
     floorMat.specularColor = new Color3(0.05, 0.03, 0.02);
     ground.material = floorMat;
 
@@ -70,6 +70,10 @@ export function createScene(engine, canvas) {
     wallBack.position = new Vector3(0, 2.5, -5);
     wallBack.material = wallMat;
 
+    const wallFront = MeshBuilder.CreateBox("wallFront", { width: 10, height: 5, depth: 0.1 }, scene);
+    wallFront.position = new Vector3(0, 2.5, 5);
+    wallFront.material = wallMat;
+
     const wallLeft = MeshBuilder.CreateBox("wallLeft", { width: 0.1, height: 5, depth: 10 }, scene);
     wallLeft.position = new Vector3(-5, 2.5, 0);
     wallLeft.material = wallMat;
@@ -77,6 +81,35 @@ export function createScene(engine, canvas) {
     const wallRight = MeshBuilder.CreateBox("wallRight", { width: 0.1, height: 5, depth: 10 }, scene);
     wallRight.position = new Vector3(5, 2.5, 0);
     wallRight.material = wallMat;
+
+    // Each wall paired with its outward normal (pointing away from room interior)
+    const walls = [
+        { mesh: wallBack,  nx:  0, nz: -1 },
+        { mesh: wallFront, nx:  0, nz:  1 },
+        { mesh: wallLeft,  nx: -1, nz:  0 },
+        { mesh: wallRight, nx:  1, nz:  0 },
+    ];
+
+    // Every frame: find the wall whose outward normal most aligns with the camera direction,
+    // then smoothly fade that wall out so the user always sees into the room.
+    scene.registerBeforeRender(() => {
+        const cp = camera.position;
+        const len = Math.sqrt(cp.x * cp.x + cp.z * cp.z) || 1;
+        const cx = cp.x / len;
+        const cz = cp.z / len;
+
+        let maxDot = -Infinity;
+        let facingWall = null;
+        for (const w of walls) {
+            const dot = cx * w.nx + cz * w.nz;
+            if (dot > maxDot) { maxDot = dot; facingWall = w; }
+        }
+
+        for (const w of walls) {
+            const target = w === facingWall ? 0.0 : 1.0;
+            w.mesh.visibility += (target - w.mesh.visibility) * 0.12;
+        }
+    });
 
     return scene;
 }

@@ -1,3 +1,4 @@
+import { useState, useRef } from "react";
 import {
     Rows3,
     Monitor,
@@ -7,6 +8,13 @@ import {
     Sofa,
     AppWindow,
     DoorOpen,
+    Save,
+    FolderOpen,
+    Trash2,
+    ChevronDown,
+    ChevronRight,
+    Pencil,
+    RefreshCw,
 } from "lucide-react";
 import useSceneStore from "../store/useSceneStore";
 
@@ -48,11 +56,20 @@ const FURNITURE_ITEMS = [
         dimensions: { width: 0.58, height: 0.88, depth: 0.55 },
     },
     {
-        id: "couch",
+        id: "eames-chair",
+        label: "Eames Chair",
+        description: "Classic lounge chair",
+        icon: Armchair,
+        dimensions: { width: 1.63, height: 1.72, depth: 1.63 },
+        glbRotation: [0, -Math.PI / 2, 0],
+    },
+    {
+        id: "tripo-sofa",
         label: "Couch",
         description: "3-seater fabric sofa",
         icon: Sofa,
-        dimensions: { width: 2.0, height: 0.90, depth: 0.90 },
+        dimensions: { width: 3.65, height: 1.64, depth: 1.64 },
+        glbRotation: [0, -Math.PI / 2, 0],
     },
     {
         id: "window",
@@ -113,8 +130,204 @@ function FurnitureButton({ item, mobile = false }) {
     );
 }
 
+function SaveRoomFooter() {
+    const placedItems = useSceneStore((s) => s.placedItems);
+    const saveRoom    = useSceneStore((s) => s.saveRoom);
+    const updateRoom  = useSceneStore((s) => s.updateRoom);
+    const activeRoomId = useSceneStore((s) => s.activeRoomId);
+    const rooms       = useSceneStore((s) => s.rooms);
+    const [saving, setSaving] = useState(false);
+    const [name, setName] = useState("");
+    const [flash, setFlash] = useState(null); // "saved" | "updated"
+
+    const canSave   = placedItems.length > 0;
+    const activeRoom = rooms.find((r) => r.id === activeRoomId);
+
+    const showFlash = (type) => {
+        setFlash(type);
+        setTimeout(() => setFlash(null), 2000);
+    };
+
+    const handleSaveNew = () => {
+        const trimmed = name.trim() || "My Room";
+        saveRoom(trimmed);
+        setName("");
+        setSaving(false);
+        showFlash("saved");
+    };
+
+    const handleUpdate = () => {
+        updateRoom(activeRoomId);
+        showFlash("updated");
+    };
+
+    if (saving) {
+        return (
+            <div className="px-5 py-4 border-t border-[#2e2e2e] flex flex-col gap-2">
+                <input
+                    autoFocus
+                    type="text"
+                    placeholder="Room name…"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveNew();
+                        if (e.key === "Escape") { setSaving(false); setName(""); }
+                    }}
+                    className="w-full bg-[#252525] text-white text-sm rounded-md px-3 py-1.5 outline-none border border-[#3a3a3a] focus:border-[#555] placeholder-[#555]"
+                />
+                <div className="flex gap-2">
+                    <button onClick={handleSaveNew} className="flex-1 bg-white text-black text-xs font-semibold rounded-md py-1.5 hover:bg-[#ddd]">
+                        Save
+                    </button>
+                    <button onClick={() => { setSaving(false); setName(""); }} className="flex-1 bg-[#252525] text-[#aaa] text-xs font-semibold rounded-md py-1.5 hover:bg-[#2e2e2e]">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="px-5 py-4 border-t border-[#2e2e2e] flex flex-col gap-2">
+            <p className="text-[10px] text-[#444]">Drag to place &nbsp;·&nbsp; Right-click to rotate</p>
+            {canSave && (
+                <div className="flex items-center gap-2">
+                    {flash ? (
+                        <span className="text-[10px] text-green-500 font-medium">
+                            {flash === "updated" ? `Updated "${activeRoom?.name}"` : "Saved!"}
+                        </span>
+                    ) : (
+                        <>
+                            {activeRoom && (
+                                <button
+                                    onClick={handleUpdate}
+                                    title={`Overwrite "${activeRoom.name}"`}
+                                    className="flex items-center gap-1 text-[10px] text-[#555] hover:text-white transition-colors"
+                                >
+                                    <RefreshCw size={11} />
+                                    <span>Update</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setSaving(true)}
+                                title="Save as new room"
+                                className="flex items-center gap-1 text-[10px] text-[#555] hover:text-white transition-colors ml-auto"
+                            >
+                                <Save size={11} />
+                                <span>Save new</span>
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function RoomRow({ room, onLoad, loadingId }) {
+    const renameRoom = useSceneStore((s) => s.renameRoom);
+    const deleteRoom = useSceneStore((s) => s.deleteRoom);
+    const activeRoomId = useSceneStore((s) => s.activeRoomId);
+    const [renaming, setRenaming] = useState(false);
+    const [draftName, setDraftName] = useState(room.name);
+    const inputRef = useRef(null);
+
+    const commitRename = () => {
+        const trimmed = draftName.trim();
+        if (trimmed) renameRoom(room.id, trimmed);
+        else setDraftName(room.name);
+        setRenaming(false);
+    };
+
+    const startRename = () => {
+        setDraftName(room.name);
+        setRenaming(true);
+        setTimeout(() => inputRef.current?.select(), 0);
+    };
+
+    const isActive = activeRoomId === room.id;
+    const fmt = (iso) => new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+    return (
+        <div className={`flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-[#252525] group ${isActive ? "bg-[#222]" : ""}`}>
+            <div className="flex-1 min-w-0">
+                {renaming ? (
+                    <input
+                        ref={inputRef}
+                        autoFocus
+                        value={draftName}
+                        onChange={(e) => setDraftName(e.target.value)}
+                        onBlur={commitRename}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") commitRename();
+                            if (e.key === "Escape") { setDraftName(room.name); setRenaming(false); }
+                        }}
+                        className="w-full bg-[#333] text-white text-sm rounded px-1.5 py-0.5 outline-none border border-[#555]"
+                    />
+                ) : (
+                    <p className="text-sm text-[#aaa] font-medium truncate">
+                        {room.name}
+                        {isActive && <span className="ml-1.5 text-[9px] text-[#555] uppercase tracking-wider">active</span>}
+                    </p>
+                )}
+                <p className="text-[10px] text-[#444]">
+                    {fmt(room.createdAt)} &nbsp;·&nbsp; {room.items.length} item{room.items.length !== 1 ? "s" : ""}
+                </p>
+            </div>
+            <button onClick={startRename} title="Rename" className="shrink-0 p-1 text-[#555] hover:text-white transition-colors opacity-0 group-hover:opacity-100">
+                <Pencil size={11} />
+            </button>
+            <button onClick={() => onLoad(room.id)} title="Load room" className="shrink-0 p-1 text-[#555] hover:text-white transition-colors">
+                {loadingId === room.id
+                    ? <span className="text-[10px] text-green-500">✓</span>
+                    : <FolderOpen size={13} />
+                }
+            </button>
+            <button onClick={() => deleteRoom(room.id)} title="Delete room" className="shrink-0 p-1 text-[#555] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100">
+                <Trash2 size={13} />
+            </button>
+        </div>
+    );
+}
+
+function MyRooms() {
+    const rooms = useSceneStore((s) => s.rooms);
+    const loadRoom = useSceneStore((s) => s.loadRoom);
+    const [open, setOpen] = useState(false);
+    const [loadingId, setLoadingId] = useState(null);
+
+    if (rooms.length === 0) return null;
+
+    const handleLoad = (id) => {
+        setLoadingId(id);
+        loadRoom(id);
+        setTimeout(() => setLoadingId(null), 800);
+    };
+
+    return (
+        <div className="mt-5">
+            <button
+                onClick={() => setOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-2 mb-1 text-[#555] hover:text-[#888] transition-colors"
+            >
+                <p className="text-[10px] uppercase tracking-[0.2em] font-medium">My Rooms</p>
+                {open ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+            </button>
+            {open && (
+                <div className="flex flex-col gap-0.5">
+                    {rooms.map((room) => (
+                        <RoomRow key={room.id} room={room} onLoad={handleLoad} loadingId={loadingId} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function Sidebar() {
     const placedItems = useSceneStore((s) => s.placedItems);
+    const requestItemDelete = useSceneStore((s) => s.requestItemDelete);
 
     return (
         <>
@@ -141,20 +354,28 @@ export default function Sidebar() {
                                 </p>
                                 <div className="flex flex-col gap-0.5">
                                     {placedItems.map((item) => (
-                                        <div key={item.uid} className="px-3 py-2 rounded-lg">
-                                            <p className="text-sm text-[#aaa] font-medium">{item.label}</p>
-                                            <p className="text-[11px] text-[#555] mt-0.5">
-                                                x: {item.x.toFixed(2)}m &nbsp; z: {item.z.toFixed(2)}m
-                                            </p>
+                                        <div key={item.uid} className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-[#252525] group">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm text-[#aaa] font-medium truncate">{item.label}</p>
+                                                <p className="text-[11px] text-[#555] mt-0.5">
+                                                    x: {item.x.toFixed(2)}m &nbsp; z: {item.z.toFixed(2)}m
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={() => requestItemDelete(item.uid)}
+                                                title="Remove item"
+                                                className="shrink-0 p-1 text-[#555] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
+                        <MyRooms />
                     </div>
-                    <div className="px-5 py-4 border-t border-[#2e2e2e]">
-                        <p className="text-[10px] text-[#444]">Drag to place &nbsp;·&nbsp; Right-click to rotate</p>
-                    </div>
+                    <SaveRoomFooter />
                 </div>
             </aside>
 
