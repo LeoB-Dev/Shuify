@@ -36,7 +36,7 @@ export default function Home() {
         </div>
 
         <h1 className="text-7xl font-black tracking-tighter mb-5 text-white">
-          0Shuify
+          Shuify
         </h1>
 
         <p className="text-white/50 text-lg leading-relaxed max-w-lg mb-8">
