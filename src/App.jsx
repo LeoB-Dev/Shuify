@@ -44,9 +44,11 @@ export default function App() {
     return !testCollision(mesh, newX, newY, newZ);
   };
   const [hintVisible, setHintVisible] = useState(true);
+  const [touchGhost, setTouchGhost] = useState(null); // { x, y, label } while finger is dragging
 
   const draggingItem = useSceneStore((s) => s.draggingItem);
   const placedItems = useSceneStore((s) => s.placedItems);
+  const clearDraggingItem = useSceneStore((s) => s.clearDraggingItem);
   const addPlacedItem = useSceneStore((s) => s.addPlacedItem);
   const updateItem = useSceneStore((s) => s.updateItem);
   const removeItem = useSceneStore((s) => s.removeItem);
@@ -68,12 +70,41 @@ export default function App() {
     tv:     { width: 1.6, height: 0.9,  depth: 0.05 },
     window: { width: 1.4, height: 1.2,  depth: 0.12 },
     door:   { width: 1.4, height: 3.2,  depth: 0.12 },
-    shelf:  { width: 2.0, height: 0.2,  depth: 0.30 },
+    shelf:  { width: 1.4, height: 0.14, depth: 0.21 },
     bed:    { width: 2.8, height: 1.05, depth: 4.0  },
     desk:   { width: 2.2, height: 0.76, depth: 1.0  },
     chair:  { width: 0.58, height: 0.88, depth: 0.55 },
     couch:  { width: 2.0, height: 0.90, depth: 0.90 },
   };
+
+  // Holds the latest spawn-at-position function so touch handlers never go stale
+  const spawnAtClientPosRef = useRef(null);
+
+  // Global touch handlers — mounted once, use refs so they always see current state.
+  // HTML5 drag events don't fire on mobile; instead we track touchstart (Sidebar),
+  // touchmove (show ghost + prevent scroll), and touchend (spawn at finger position).
+  useEffect(() => {
+    const onTouchMove = (e) => {
+      if (!draggingItemRef.current) return;
+      e.preventDefault(); // stop page scroll while dragging a furniture item
+      const t = e.touches[0];
+      setTouchGhost({ x: t.clientX, y: t.clientY, label: draggingItemRef.current.label });
+    };
+    const onTouchEnd = (e) => {
+      if (!draggingItemRef.current) return;
+      const t = e.changedTouches[0];
+      setTouchGhost(null);
+      spawnAtClientPosRef.current?.(t.clientX, t.clientY);
+      clearDraggingItem();
+    };
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onTouchEnd);
+    return () => {
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // runs once — handlers read refs so they never go stale
 
   // Allows the dragged sidebar element to be dropped onto the canvas
   const handleDragOver = (e) => e.preventDefault();
@@ -1494,22 +1525,37 @@ export default function App() {
   // Items whose id matches a file in /public/models/ are loaded as GLB; everything else is a box
   const GLB_ITEMS = ["shelf", "tripo-sofa", "eames-chair"];
 
-  // On drop, ray-cast into the scene to find the floor point under the cursor,
-  // then spawn the dragged item at that world position
-  const handleDrop = (e) => {
-    e.preventDefault();
+  // Core spawn logic — shared by mouse drop and touch release.
+  // Always up-to-date via ref so touch handlers (mounted once) never go stale.
+  const spawnAtClientPos = (clientX, clientY) => {
     const scene = sceneRef.current;
     const item = draggingItemRef.current;
     if (!scene || !item) return;
 
-    // Convert browser pointer coordinates to canvas-local coordinates
     const canvas = scene.getEngine().getRenderingCanvas();
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // Scale CSS-pixel coords to Babylon's internal canvas resolution (handles DPR / engine scaling)
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    if (x < 0 || y < 0 || x > canvas.width || y > canvas.height) return;
 
-    // Pick against the scene to get the 3D world position on the floor
-    const pickResult = scene.pick(x, y);
+    const isWallItem = item.mountType === "wall" || ["tv", "window", "door"].includes(item.id);
+    const WALL_NAMES = ["wallBack", "wallFront", "wallLeft", "wallRight"];
+
+    let pickResult;
+    if (isWallItem) {
+      // Walls are non-pickable by default (so they don't block furniture picks).
+      // Temporarily re-enable them so wall-item placement can detect which wall was hit.
+      const wallMeshes = WALL_NAMES.map((n) => scene.getMeshByName(n)).filter(Boolean);
+      wallMeshes.forEach((m) => { m.isPickable = true; });
+      pickResult = scene.pick(x, y, (m) => WALL_NAMES.includes(m.name));
+      wallMeshes.forEach((m) => { m.isPickable = false; });
+    } else {
+      pickResult = scene.pick(x, y);
+    }
+
     if (!pickResult.hit) return;
 
     const { x: px, z: pz } = pickResult.pickedPoint;
@@ -1535,6 +1581,13 @@ export default function App() {
     } else {
       spawnBox(scene, item, px, pz);
     }
+  };
+  // Keep the ref current every render so the once-mounted touch handlers can call it
+  spawnAtClientPosRef.current = spawnAtClientPos;
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    spawnAtClientPos(e.clientX, e.clientY);
   };
 
   // ── Room loader ──────────────────────────────────────────────────────────
@@ -1624,7 +1677,18 @@ export default function App() {
   }, [placedItems.length]);
 
   return (
-    <div className="w-screen h-screen bg-black relative overflow-hidden">
+    <div className="w-screen bg-black relative overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
+      {/* Touch drag ghost — follows the finger so the user sees what they're placing */}
+      {touchGhost && (
+        <div
+          className="fixed z-50 pointer-events-none select-none"
+          style={{ left: touchGhost.x, top: touchGhost.y - 56, transform: 'translateX(-50%)' }}
+        >
+          <div className="bg-white text-black text-xs font-semibold px-3 py-1.5 rounded-full shadow-xl whitespace-nowrap">
+            {touchGhost.label}
+          </div>
+        </div>
+      )}
       <Sidebar />
       {/* Canvas area fills the remaining space after the sidebar / bottom bar */}
       <div
@@ -1646,6 +1710,7 @@ export default function App() {
         </div>
         <BabylonCanvas onSceneReady={(scene) => {
           sceneRef.current = scene;
+
           // Right-click any floor item to rotate it 90° around Y.
           // Wall items are excluded (they have no entry in rotClampRef).
           scene.onPointerObservable.add((pointerInfo) => {

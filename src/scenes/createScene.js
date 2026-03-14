@@ -66,21 +66,27 @@ export function createScene(engine, canvas) {
     ground.material = floorMat;
 
     // --- WALLS ---
+    // isPickable = false so walls never intercept furniture drag/rotate picks.
+    // Wall-item placement (TV, window, door) temporarily re-enables picking in App.jsx.
     const wallBack = MeshBuilder.CreateBox("wallBack", { width: 10, height: 5, depth: 0.1 }, scene);
     wallBack.position = new Vector3(0, 2.5, -5);
     wallBack.material = wallMat;
+    wallBack.isPickable = false;
 
     const wallFront = MeshBuilder.CreateBox("wallFront", { width: 10, height: 5, depth: 0.1 }, scene);
     wallFront.position = new Vector3(0, 2.5, 5);
     wallFront.material = wallMat;
+    wallFront.isPickable = false;
 
     const wallLeft = MeshBuilder.CreateBox("wallLeft", { width: 0.1, height: 5, depth: 10 }, scene);
     wallLeft.position = new Vector3(-5, 2.5, 0);
     wallLeft.material = wallMat;
+    wallLeft.isPickable = false;
 
     const wallRight = MeshBuilder.CreateBox("wallRight", { width: 0.1, height: 5, depth: 10 }, scene);
     wallRight.position = new Vector3(5, 2.5, 0);
     wallRight.material = wallMat;
+    wallRight.isPickable = false;
 
     // Each wall paired with its outward normal (pointing away from room interior)
     const walls = [

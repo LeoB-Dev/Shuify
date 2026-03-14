@@ -98,6 +98,12 @@ function FurnitureButton({ item, mobile = false }) {
         draggable: true,
         onDragStart: () => setDraggingItem(item),
         onDragEnd: () => clearDraggingItem(),
+        // Touch support: touchstart sets the active item; touchmove/touchend are
+        // handled globally in App.jsx so the finger can travel onto the canvas.
+        onTouchStart: (e) => {
+            e.preventDefault(); // prevent tap-highlight / scroll-start on the button
+            setDraggingItem(item);
+        },
     };
 
     if (mobile) {
