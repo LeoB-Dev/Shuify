@@ -1523,7 +1523,7 @@ export default function App() {
   };
 
   // Items whose id matches a file in /public/models/ are loaded as GLB; everything else is a box
-  const GLB_ITEMS = ["shelf", "tripo-sofa", "eames-chair", "woodenbed", "oakchest"];
+  const GLB_ITEMS = ["shelf", "tripo-sofa", "eames-chair", "woodenbed", "oakchest", "woodensideboard"];
 
   // Core spawn logic — shared by mouse drop and touch release.
   // Always up-to-date via ref so touch handlers (mounted once) never go stale.

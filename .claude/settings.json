@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -lah \"c:\\\\Users\\\\leobe\\\\vscf\\\\shuify-babylon\\\\public\"\" 2>/dev/null || echo \"No public directory \")"
+    ]
+  }
+}

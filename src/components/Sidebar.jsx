@@ -43,13 +43,6 @@ const FURNITURE_ITEMS = [
         dimensions: { width: 2.2, height: 0.76, depth: 1.0 },
     },
     {
-        id: "chair",
-        label: "Chair",
-        description: "Desk chair with cushion",
-        icon: Armchair,
-        dimensions: { width: 0.58, height: 0.88, depth: 0.55 },
-    },
-    {
         id: "eames-chair",
         label: "Eames Chair",
         description: "Classic lounge chair",
@@ -80,6 +73,14 @@ const FURNITURE_ITEMS = [
         icon: DoorOpen,
         mountType: "wall",
         dimensions: { width: 1.4, height: 3.2, depth: 0.12 },
+    },
+    {
+        id: "woodensideboard",
+        label: "Wooden Sideboard",
+        description: "Wooden sideboard unit",
+        icon: Package,
+        dimensions: { width: 3.0, height: 1.6, depth: 0.9 },
+        glbRotation: [0, -Math.PI / 2, 0],
     },
     {
         id: "woodenbed",

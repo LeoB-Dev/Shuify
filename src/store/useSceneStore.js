@@ -11,12 +11,10 @@ const useSceneStore = create(
             placedItems: [],
             addPlacedItem: (item) => set((state) => {
                 const next = [...state.placedItems, item];
-                console.log("[room] placed:", item, "| all items:", next);
                 return { placedItems: next };
             }),
             updateItem: (uid, patch) => set((state) => {
                 const next = state.placedItems.map((i) => i.uid === uid ? { ...i, ...patch } : i);
-                console.log("[room] updated:", next.find((i) => i.uid === uid), "| all items:", next);
                 return { placedItems: next };
             }),
             removeItem: (uid) => set((state) => ({
@@ -39,7 +37,6 @@ const useSceneStore = create(
                     createdAt: new Date().toISOString(),
                     items: state.placedItems.map((i) => ({ ...i })),
                 };
-                console.log("[rooms] saved:", room);
                 return { rooms: [...state.rooms, room] };
             }),
 
@@ -71,7 +68,6 @@ const useSceneStore = create(
             loadRoom: (roomId) => {
                 const room = get().rooms.find((r) => r.id === roomId);
                 if (!room) return;
-                console.log("[rooms] loading:", room.name);
                 set({ pendingLoad: room.items.map((i) => ({ ...i })), activeRoomId: roomId });
             },
 

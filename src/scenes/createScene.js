@@ -38,10 +38,14 @@ export function createScene(engine, canvas) {
     sun.intensity = 0.22;
     sun.diffuse = new Color3(1.00, 0.96, 0.88);
 
+    // --- COLOURS — edit these hex values to change wall/floor colours ---
+    const WALL_COLOR  = "#ecdfd0"; // ← change hex to update wall colour
+    const FLOOR_COLOR = "#c8b89a"; // ← change hex to update floor colour
+
     // --- WALL TEXTURE — plaster grain via canvas noise ---
     const wallTex = new DynamicTexture("wallTex", { width: 512, height: 512 }, scene, false);
     const wCtx = wallTex.getContext();
-    wCtx.fillStyle = "#ecdfd0";          // warm beige base
+    wCtx.fillStyle = WALL_COLOR;
     wCtx.fillRect(0, 0, 512, 512);
     for (let i = 0; i < 6000; i++) {
         const x = Math.random() * 512;
@@ -61,8 +65,8 @@ export function createScene(engine, canvas) {
 
     const ground = MeshBuilder.CreateGround("ground", { width: 10, height: 10 }, scene);
     const floorMat = new StandardMaterial("floorMat", scene);
-    floorMat.diffuseColor = new Color3(0.35, 0.17, 0.04); // solid brown
-    floorMat.specularColor = new Color3(0.05, 0.03, 0.02);
+    floorMat.diffuseColor = Color3.FromHexString(FLOOR_COLOR);
+    floorMat.specularColor = new Color3(0.03, 0.03, 0.03);
     ground.material = floorMat;
 
     // --- WALLS ---
@@ -90,10 +94,10 @@ export function createScene(engine, canvas) {
 
     // Each wall paired with its outward normal (pointing away from room interior)
     const walls = [
-        { mesh: wallBack,  nx:  0, nz: -1 },
-        { mesh: wallFront, nx:  0, nz:  1 },
-        { mesh: wallLeft,  nx: -1, nz:  0 },
-        { mesh: wallRight, nx:  1, nz:  0 },
+        { mesh: wallBack, nx: 0, nz: -1 },
+        { mesh: wallFront, nx: 0, nz: 1 },
+        { mesh: wallLeft, nx: -1, nz: 0 },
+        { mesh: wallRight, nx: 1, nz: 0 },
     ];
 
     // Every frame: find the wall whose outward normal most aligns with the camera direction,
