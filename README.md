@@ -19,3 +19,6 @@ Tasklist:
 Create a button that takes you back to the center
 
 Instead of git push, run: git push origin shuify-babylon:main
+
+AI tips: root cause of white display all along — it was falling through to spawnBox. must be in this list in app.jsx "const GLB_ITEMS = ["shelf", "tripo-sofa", "eames-chair", "woodenbed", "oakchest"];"
+

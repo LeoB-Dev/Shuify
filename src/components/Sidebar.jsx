@@ -8,6 +8,7 @@ import {
     Sofa,
     AppWindow,
     DoorOpen,
+    Package,
     Save,
     FolderOpen,
     Trash2,
@@ -33,13 +34,6 @@ const FURNITURE_ITEMS = [
         icon: Monitor,
         mountType: "wall",
         dimensions: { width: 1.6, height: 0.9, depth: 0.05 },
-    },
-    {
-        id: "bed",
-        label: "Bed",
-        description: "Double bed with headboard",
-        icon: BedDouble,
-        dimensions: { width: 1.6, height: 0.82, depth: 2.0 },
     },
     {
         id: "desk",
@@ -86,6 +80,14 @@ const FURNITURE_ITEMS = [
         icon: DoorOpen,
         mountType: "wall",
         dimensions: { width: 1.4, height: 3.2, depth: 0.12 },
+    },
+    {
+        id: "woodenbed",
+        label: "Wooden Bed",
+        description: "Wooden bed frame",
+        icon: BedDouble,
+        dimensions: { width: 2.56, height: 1.312, depth: 3.2 },
+        glbRotation: [0, -Math.PI / 2, 0],
     },
 ];
 
