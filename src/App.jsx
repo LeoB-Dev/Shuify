@@ -27,8 +27,13 @@ export default function App() {
     const saved = mesh.position.clone();
     mesh.position.set(newX, newY, newZ);
     mesh.computeWorldMatrix(true);
+    const isFloor = !mesh.metadata?.wallItem;
     const collides = Object.values(meshRegistryRef.current).some((other) => {
       if (other === mesh) return false;
+      // Floor items and wall items occupy different layers — skip cross-layer checks
+      // so wall-mounted hitboxes (window, TV, door) never block or release floor items.
+      if (isFloor && other.metadata?.wallItem) return false;
+      if (!isFloor && !other.metadata?.wallItem) return false;
       return mesh.intersectsMesh(other, false); // false = AABB (sufficient for axis-aligned boxes)
     });
     mesh.position.copyFrom(saved);
@@ -68,7 +73,7 @@ export default function App() {
   // but the entry is included to avoid undefined for any code that inspects catalogItem.
   const ITEM_DIMS = {
     tv:     { width: 1.6, height: 0.9,  depth: 0.05 },
-    window: { width: 1.4, height: 1.2,  depth: 0.12 },
+    window: { width: 4.2, height: 1.8,  depth: 0.12 },
     door:   { width: 1.4, height: 3.2,  depth: 0.12 },
     shelf:  { width: 1.4, height: 0.14, depth: 0.21 },
     bed:    { width: 2.8, height: 1.05, depth: 4.0  },
@@ -605,6 +610,7 @@ export default function App() {
           -sign * (D / 2 + 0.013), 0, 0,  0.16, 0.16, 0.18,  0.20, 0.20, 0.22);
       }
 
+      hitbox.metadata = { wallItem: true };
       activeHitbox = hitbox;
       meshRegistryRef.current[uid] = hitbox;
 
@@ -1186,6 +1192,7 @@ export default function App() {
       const mat = new StandardMaterial(name, scene);
       mat.diffuseColor  = new Color3(r, g, b);
       mat.specularColor = new Color3(sr, sg, sb);
+      mat.backFaceCulling = false;
       if (alpha < 1) { mat.alpha = alpha; }
       return mat;
     };
@@ -1202,7 +1209,7 @@ export default function App() {
     // Builds 4 frame strips + glass + cross dividers parented to hitbox.
     // fx/fy/fz describe the offset direction toward the room face.
     const addWindowDetail = (hitbox, wall) => {
-      const frameCol  = [0.88, 0.86, 0.82];   // warm white frame
+      const frameCol  = [0.05, 0.05, 0.05];   // matte black frame
       const divT      = 0.035;                 // cross-divider thickness
 
       if (wall === "back") {
@@ -1213,7 +1220,7 @@ export default function App() {
         addBox(hitbox, `win_left_${uid}`,   { width: fT,      height: H-2*fT,  depth: D }, -W/2+fT/2, 0, 0, ...frameCol);
         addBox(hitbox, `win_right_${uid}`,  { width: fT,      height: H-2*fT,  depth: D },  W/2-fT/2, 0, 0, ...frameCol);
         // Glass pane
-        addBox(hitbox, `win_glass_${uid}`,  { width: W-2*fT,  height: H-2*fT,  depth: 0.008 }, 0, 0, fz+0.001, 0.72, 0.86, 0.95, 0.35);
+        addBox(hitbox, `win_glass_${uid}`,  { width: W-2*fT,  height: H-2*fT,  depth: 0.008 }, 0, 0, fz+0.001, 0.20, 0.20, 0.30, 0.92);
         // Cross dividers
         addBox(hitbox, `win_div_h_${uid}`,  { width: W-2*fT,  height: divT,    depth: 0.012 }, 0, 0, fz+0.003, ...frameCol);
         addBox(hitbox, `win_div_v_${uid}`,  { width: divT,    height: H-2*fT,  depth: 0.012 }, 0, 0, fz+0.003, ...frameCol);
@@ -1226,7 +1233,7 @@ export default function App() {
         addBox(hitbox, `win_left_${uid}`,   { width: D,       height: H-2*fT,  depth: fT }, 0, 0, -W/2+fT/2, ...frameCol);
         addBox(hitbox, `win_right_${uid}`,  { width: D,       height: H-2*fT,  depth: fT }, 0, 0,  W/2-fT/2, ...frameCol);
         // Glass pane
-        addBox(hitbox, `win_glass_${uid}`,  { width: 0.008,   height: H-2*fT,  depth: W-2*fT }, fx+sign*0.001, 0, 0, 0.72, 0.86, 0.95, 0.35);
+        addBox(hitbox, `win_glass_${uid}`,  { width: 0.008,   height: H-2*fT,  depth: W-2*fT }, fx+sign*0.001, 0, 0, 0.20, 0.20, 0.30, 0.92);
         // Cross dividers
         addBox(hitbox, `win_div_h_${uid}`,  { width: 0.012,   height: divT,    depth: W-2*fT }, fx+sign*0.003, 0, 0, ...frameCol);
         addBox(hitbox, `win_div_v_${uid}`,  { width: 0.012,   height: H-2*fT,  depth: divT   }, fx+sign*0.003, 0, 0, ...frameCol);
@@ -1273,6 +1280,7 @@ export default function App() {
       }
 
       addWindowDetail(hitbox, wall);
+      hitbox.metadata = { wallItem: true };
       activeHitbox = hitbox;
       meshRegistryRef.current[uid] = hitbox;
 
@@ -1485,6 +1493,7 @@ export default function App() {
       }
 
       addDoorDetail(hitbox, wall);
+      hitbox.metadata = { wallItem: true };
       activeHitbox = hitbox;
       meshRegistryRef.current[uid] = hitbox;
 
@@ -1524,6 +1533,15 @@ export default function App() {
 
   // Items whose id matches a file in /public/models/ are loaded as GLB; everything else is a box
   const GLB_ITEMS = ["shelf", "tripo-sofa", "eames-chair", "woodenbed", "oakchest", "woodensideboard"];
+
+  // Per-model glbRotation overrides — must match Sidebar.jsx catalog entries.
+  // Items not listed here get the default Z-up correction: [-Math.PI/2, -Math.PI/2, 0].
+  const GLB_ROTATION = {
+    "eames-chair":     [0, -Math.PI / 2, 0],
+    "tripo-sofa":      [0, -Math.PI / 2, 0],
+    "woodensideboard": [0, -Math.PI / 2, 0],
+    "woodenbed":       [0, -Math.PI / 2, 0],
+  };
 
   // Core spawn logic — shared by mouse drop and touch release.
   // Always up-to-date via ref so touch handlers (mounted once) never go stale.
@@ -1621,6 +1639,7 @@ export default function App() {
         label:      saved.label,
         dimensions: ITEM_DIMS[saved.id],
         mountType:  saved.modelType === "wall" ? "wall" : undefined,
+        glbRotation: GLB_ROTATION[saved.id],
       };
 
       if      (saved.id === "tv")                  spawnTV(scene, catalogItem, makeWallPickResult(saved));

@@ -64,7 +64,7 @@ const FURNITURE_ITEMS = [
         description: "Wall mounted window",
         icon: AppWindow,
         mountType: "wall",
-        dimensions: { width: 1.4, height: 1.2, depth: 0.12 },
+        dimensions: { width: 4.2, height: 1.8, depth: 0.12 },
     },
     {
         id: "door",
